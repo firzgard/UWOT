@@ -26,5 +26,6 @@ public:
 		bool bDrawAimingDebugLine = false;
 
 public:
-	virtual void Tick(float deltaTime) override;
+	void BeginPlay() override;
+	void Tick(float deltaTime) override;
 };

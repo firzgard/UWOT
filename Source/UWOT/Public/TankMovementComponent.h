@@ -19,15 +19,17 @@ class UWOT_API UTankMovementComponent : public UNavMovementComponent
 public:
 	UTankTrack* LeftTrack = nullptr;
 	UTankTrack* RightTrack = nullptr;
-	
+	UPROPERTY(BlueprintReadWrite)
+		FVector2D MoveDirection;
+
 private:
 	void RequestDirectMove(const FVector& moveVelocity, bool bForceMaxSpeed) override;
+
+protected:
+	void BeginPlay() override;
+	void TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Setup")
 		void Init(UTankTrack * leftTrack, UTankTrack * rightTrack);
-	UFUNCTION(BlueprintCallable, Category = "Input")
-		void MoveBody(float throttleUnit);
-	UFUNCTION(BlueprintCallable, Category = "Input")
-		void RotateBody(float throttleUnit);
 };

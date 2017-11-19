@@ -18,16 +18,12 @@ protected:
 		UProjectileMovementComponent * ProjectileMovementComponent = nullptr;
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
+	void Tick(float deltaTime) override;
 
 public:	
 	// Sets default values for this actor's properties
 	AProjectile();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	
-	float GetSpeed();
+	float GetSpeed() const;
 };

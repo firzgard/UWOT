@@ -3,38 +3,63 @@
 #include "TankMovementComponent.h"
 #include "TankTrack.h"
 
+void UTankMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	SetTickGroup(ETickingGroup::TG_StartPhysics);
+}
+
+void UTankMovementComponent::TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction * thisTickFunction)
+{
+	Super::TickComponent(deltaTime, tickType, thisTickFunction);
+
+	// Set track's throttle based on moving direction
+	if(!MoveDirection.IsZero())
+	{
+		MoveDirection.Normalize();
+		if (MoveDirection.X > 0)
+		{
+			if (MoveDirection.Y > 0)
+			{
+				LeftTrack->SetThrottle(1);
+				RightTrack->SetThrottle(1 - MoveDirection.Y * 2);
+			}
+			else
+			{
+				LeftTrack->SetThrottle(1 + MoveDirection.Y * 2);
+				RightTrack->SetThrottle(1);
+			}
+		}
+		else
+		{
+			if (MoveDirection.Y > 0)
+			{
+				LeftTrack->SetThrottle(-1);
+				RightTrack->SetThrottle(MoveDirection.Y * 2 - 1);
+			}
+			else
+			{
+				LeftTrack->SetThrottle(-MoveDirection.Y * 2 - 1);
+				RightTrack->SetThrottle(-1);
+			}
+		}
+		MoveDirection = FVector2D::ZeroVector;
+	}
+}
 
 void UTankMovementComponent::RequestDirectMove(const FVector& moveVelocity, bool bForceMaxSpeed)
 {
-	auto moveDirection = moveVelocity.GetSafeNormal();
-
-	auto moveBodyDirectionThrottle = FVector::DotProduct(GetOwner()->GetActorForwardVector(), moveDirection);
-	if (moveBodyDirectionThrottle > 0) MoveBody(1);
-	else if (moveBodyDirectionThrottle < 0) MoveBody(-1);
-
-	auto rotateBodyThrottle = FVector::DotProduct(GetOwner()->GetActorRightVector(), moveDirection);
-	if (rotateBodyThrottle > 0) RotateBody(1);
-	else if (rotateBodyThrottle < 0) RotateBody(-1);
-	
+	MoveDirection = FVector2D(FVector::DotProduct(GetOwner()->GetActorForwardVector(), moveVelocity), FVector::DotProduct(GetOwner()->GetActorRightVector(), moveVelocity));
 }
 
 void UTankMovementComponent::Init (UTankTrack * leftTrack, UTankTrack * rightTrack)
 {
 	if(!leftTrack || !rightTrack) return;
+
 	LeftTrack = leftTrack;
 	RightTrack = rightTrack;
-}
 
-
-void UTankMovementComponent::MoveBody (const float throttleUnit)
-{
-	LeftTrack->SetThrottle(throttleUnit);
-	RightTrack->SetThrottle(throttleUnit);
-}
-
-void UTankMovementComponent::RotateBody (const float throttleUnit)
-{
-	LeftTrack->SetThrottle(throttleUnit);
-	RightTrack->SetThrottle(-throttleUnit);
+	leftTrack->AddTickPrerequisiteComponent(this);
+	rightTrack->AddTickPrerequisiteComponent(this);
 }
 

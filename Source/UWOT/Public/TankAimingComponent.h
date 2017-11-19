@@ -44,16 +44,13 @@ private:
 	void RotateTurret(const FVector & targetTurretWorldDirection);
 
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
+	void TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
 
 public:
 
 	// Sets default values for this component's properties
 	UTankAimingComponent();
-
-	// Called every frame
-	virtual void TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
 		void Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel, USceneComponent * firingPosition);

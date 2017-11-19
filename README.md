@@ -1,2 +1,2 @@
 # UWOT
-My WOT clone in Unreal with Ben Tristem's Unreal course
+My implementation of Ben Tristem's tank game following his UE4 course

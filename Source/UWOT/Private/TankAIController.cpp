@@ -4,6 +4,12 @@
 #include "Engine/World.h"
 #include "Tank.h"
 
+void ATankAIController::BeginPlay()
+{
+	Super::BeginPlay();
+	SetTickGroup(ETickingGroup::TG_PrePhysics);
+}
+
 void ATankAIController::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);

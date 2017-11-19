@@ -33,9 +33,9 @@ void ATank::SetupPlayerInputComponent(UInputComponent* playerInputComponent)
 	Super::SetupPlayerInputComponent(playerInputComponent);
 }
 
-void ATank::RotateBody(float throttleUnit)
+void ATank::RotateBody(const float throttleUnit)
 {
-	MovementComponent->RotateBody(throttleUnit);
+	MovementComponent->MoveDirection = FVector2D(0, throttleUnit);
 }
 
 void ATank::AimGun(const FVector & targetLocation

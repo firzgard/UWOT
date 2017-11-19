@@ -23,17 +23,16 @@ protected:
 		UTankMovementComponent* MovementComponent = nullptr;
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
+	void Tick(float deltaTime) override;
 
 public:
 	ATank();
 
-	virtual void Tick(float deltaTime) override;
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* playerInputComponent) override;
+	void SetupPlayerInputComponent(class UInputComponent* playerInputComponent) override;
 
-	void RotateBody(float throttleUnit);
+	void RotateBody(const float throttleUnit);
 
 	UFUNCTION(BlueprintCallable, Category = "Input")
 		void AimGun(const FVector & targetLocation

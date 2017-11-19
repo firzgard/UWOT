@@ -14,11 +14,18 @@ class UWOT_API UTankTrack : public UStaticMeshComponent
 {
 	GENERATED_BODY()
 
+private:
+	float Throttle = 0;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		float MovingForce = 10000000;
-	
+
+protected:
+	void OnRegister() override;
+	void TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
+
 public:
 	UFUNCTION(BlueprintCallable)
-		void SetThrottle(float throttle);
+		void SetThrottle(const float throttle);
 };

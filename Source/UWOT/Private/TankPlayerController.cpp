@@ -3,7 +3,11 @@
 #include "TankPlayerController.h"
 
 
-
+void ATankPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	SetTickGroup(ETickingGroup::TG_PrePhysics);
+}
 
 void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector &OutTargetPosition) const
 {

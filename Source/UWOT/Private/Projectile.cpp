@@ -19,11 +19,11 @@ void AProjectile::BeginPlay()
 }
 
 // Called every frame
-void AProjectile::Tick(float DeltaTime)
+void AProjectile::Tick(float deltaTime)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(deltaTime);
 
 }
 
-float AProjectile::GetSpeed() { return ProjectileMovementComponent->InitialSpeed; }
+float AProjectile::GetSpeed() const { return ProjectileMovementComponent->InitialSpeed; }
 
