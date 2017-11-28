@@ -3,7 +3,7 @@
 #include "Tank.h"
 #include "TankAimingComponent.h"
 #include "TankMovementComponent.h"
-
+#include "CamouflageComponent.h"
 
 // Sets default values
 ATank::ATank()
@@ -13,6 +13,7 @@ ATank::ATank()
 
 	AimingComponent = CreateDefaultSubobject<UTankAimingComponent>(FName("TankAimingComponent"));
 	MovementComponent = CreateDefaultSubobject<UTankMovementComponent>(FName("TankMovementComponent"));
+	CamouflageComponent = CreateDefaultSubobject<UCamouflageComponent>(FName("TankCamouflageComponent"));
 }
 
 // Called when the game starts or when spawned

@@ -10,6 +10,7 @@
 
 class UTankAimingComponent;
 class UTankMovementComponent;
+class UCamouflageComponent;
 
 UCLASS()
 class UWOT_API ATank : public APawn
@@ -21,6 +22,8 @@ protected:
 		UTankAimingComponent* AimingComponent = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 		UTankMovementComponent* MovementComponent = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+		UCamouflageComponent* CamouflageComponent = nullptr;
 
 protected:
 	void BeginPlay() override;
