@@ -14,8 +14,10 @@ class UWOT_API AProjectile : public AActor
 	GENERATED_BODY()
 
 protected:	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Projectile Properties")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile Properties")
 		UProjectileMovementComponent * ProjectileMovementComponent = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile Properties")
+		float ReloadTime = 5;
 
 protected:
 	void BeginPlay() override;
@@ -26,4 +28,5 @@ public:
 	AProjectile();
 
 	float GetSpeed() const;
+	float GetReloadTime() const;
 };

@@ -42,8 +42,5 @@ protected:
 
 public:	
 	UCamouflageComponent();
-
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "Components|Camouflage"))
-		void ReceiveChangeCamouflage(float visibility);
 	
 };

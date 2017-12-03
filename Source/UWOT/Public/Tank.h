@@ -8,7 +8,7 @@
 #include "Kismet/GameplayStaticsTypes.h"
 #include "Tank.generated.h"
 
-class UTankAimingComponent;
+class UTankMainWeaponComponent;
 class UTankMovementComponent;
 class UCamouflageComponent;
 
@@ -19,7 +19,7 @@ class UWOT_API ATank : public APawn
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
-		UTankAimingComponent* AimingComponent = nullptr;
+		UTankMainWeaponComponent* MainWeaponComponent = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 		UTankMovementComponent* MovementComponent = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
@@ -42,5 +42,5 @@ public:
 			, const ESuggestProjVelocityTraceOption::Type traceOption  = ESuggestProjVelocityTraceOption::DoNotTrace
 			, const bool bDrawDebug  = false);
 	UFUNCTION(BlueprintCallable, Category = "Input")
-		void FireGun();
+		bool TryFireGun();
 };

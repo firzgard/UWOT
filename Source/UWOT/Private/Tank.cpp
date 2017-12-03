@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Tank.h"
-#include "TankAimingComponent.h"
+#include "TankMainWeaponComponent.h"
 #include "TankMovementComponent.h"
 #include "CamouflageComponent.h"
 
@@ -11,7 +11,7 @@ ATank::ATank()
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	AimingComponent = CreateDefaultSubobject<UTankAimingComponent>(FName("TankAimingComponent"));
+	MainWeaponComponent = CreateDefaultSubobject<UTankMainWeaponComponent>(FName("TankMainWeaponComponent"));
 	MovementComponent = CreateDefaultSubobject<UTankMovementComponent>(FName("TankMovementComponent"));
 	CamouflageComponent = CreateDefaultSubobject<UCamouflageComponent>(FName("TankCamouflageComponent"));
 }
@@ -43,10 +43,10 @@ void ATank::AimGun(const FVector & targetLocation
 	, const ESuggestProjVelocityTraceOption::Type traceOption
 	, const bool bDrawDebug)
 {
-	AimingComponent->AimGun(targetLocation, traceOption, bDrawDebug);
+	MainWeaponComponent->AimGun(targetLocation, traceOption, bDrawDebug);
 }
 
-void ATank::FireGun()
+bool ATank::TryFireGun()
 {
-	AimingComponent->FireGun();
+	return MainWeaponComponent->TryFireGun();
 }

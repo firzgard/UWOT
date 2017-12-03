@@ -17,20 +17,7 @@ void UTankMovementComponent::TickComponent(float deltaTime, ELevelTick tickType,
 	if(!MoveDirection.IsZero())
 	{
 		MoveDirection.Normalize();
-		if (MoveDirection.X > 0)
-		{
-			if (MoveDirection.Y > 0)
-			{
-				LeftTrack->SetThrottle(1);
-				RightTrack->SetThrottle(1 - MoveDirection.Y * 2);
-			}
-			else
-			{
-				LeftTrack->SetThrottle(1 + MoveDirection.Y * 2);
-				RightTrack->SetThrottle(1);
-			}
-		}
-		else
+		if (MoveDirection.X < 0)
 		{
 			if (MoveDirection.Y > 0)
 			{
@@ -41,6 +28,19 @@ void UTankMovementComponent::TickComponent(float deltaTime, ELevelTick tickType,
 			{
 				LeftTrack->SetThrottle(-MoveDirection.Y * 2 - 1);
 				RightTrack->SetThrottle(-1);
+			}
+		}
+		else
+		{
+			if (MoveDirection.Y > 0)
+			{
+				LeftTrack->SetThrottle(1);
+				RightTrack->SetThrottle(1 - MoveDirection.Y * 2);
+			}
+			else
+			{
+				LeftTrack->SetThrottle(1 + MoveDirection.Y * 2);
+				RightTrack->SetThrottle(1);
 			}
 		}
 		MoveDirection = FVector2D::ZeroVector;

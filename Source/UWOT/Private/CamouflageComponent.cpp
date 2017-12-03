@@ -18,7 +18,7 @@ void UCamouflageComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CamouflageRemainDuration = CamouflageDuration;
-	ReceiveChangeCamouflage(CamouflageVisibility);
+	OnChangeCamouflage.Broadcast(CamouflageVisibility);
 }
 
 
@@ -54,7 +54,7 @@ void UCamouflageComponent::TickComponent(float deltaTime, ELevelTick tickType, F
 		CamouflageVisibility = FMath::Clamp<float>(CamouflageVisibility, 0, 1);
 
 		// Call the blueprint anim event
-		ReceiveChangeCamouflage(CamouflageVisibility);
+		OnChangeCamouflage.Broadcast(CamouflageVisibility);
 	}
 }
 

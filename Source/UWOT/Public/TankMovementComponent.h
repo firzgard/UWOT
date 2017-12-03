@@ -16,9 +16,11 @@ class UWOT_API UTankMovementComponent : public UNavMovementComponent
 {
 	GENERATED_BODY()
 
-public:
+protected:
 	UTankTrack* LeftTrack = nullptr;
 	UTankTrack* RightTrack = nullptr;
+
+public:
 	UPROPERTY(BlueprintReadWrite)
 		FVector2D MoveDirection;
 
@@ -31,5 +33,5 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Setup")
-		void Init(UTankTrack * leftTrack, UTankTrack * rightTrack);
+		void Init(UTankTrack * leftTrackInstance, UTankTrack * rightTrackInstace);
 };
