@@ -5,9 +5,13 @@ My implementation of Ben Tristem's tank game following his [UE4 course](https://
 
 ### 1. Camouflage:
 
-![Camouflage demo 1](https://github.com/megafirzen/UWOT/blob/master/RawContent/Images/Demo_Camo001.gif "Material demo")
+- **Material demo**
 
-![Camouflage demo 2](https://github.com/megafirzen/UWOT/blob/master/RawContent/Images/Demo_Camo002.gif "In-game demo")
+![Material demo](https://github.com/megafirzen/UWOT/blob/master/RawContent/Images/Demo_Camo001.gif "Material demo")
+
+- **In-game demo**
+
+![In-game demo](https://github.com/megafirzen/UWOT/blob/master/RawContent/Images/Demo_Camo002.gif "In-game demo")
 
 #### Description:
 Camouflage with transition effect. Transparency is done using Dither Temporal AA instead of Translucency.
