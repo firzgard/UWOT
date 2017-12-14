@@ -3,11 +3,14 @@
 #include "TankAIController.h"
 #include "Engine/World.h"
 #include "Tank.h"
+#include "TankMainWeaponComponent.h"
 
 void ATankAIController::BeginPlay()
 {
 	Super::BeginPlay();
 	SetTickGroup(ETickingGroup::TG_PrePhysics);
+
+	ControlledTank = Cast<ATank>(GetPawn());
 }
 
 void ATankAIController::Tick(float deltaTime)
@@ -15,13 +18,12 @@ void ATankAIController::Tick(float deltaTime)
 	Super::Tick(deltaTime);
 
 	auto player = GetWorld()->GetFirstPlayerController()->GetPawn();
-	auto tank = Cast<ATank>(GetPawn());
 
 	if (player)
 	{
-		tank->AimGun(player->GetActorLocation(), AimingTraceOption, bDrawAimingDebugLine);
+		ControlledTank->MainWeaponComponent->AimGun(player->GetActorLocation(), AimingTraceOption, bDrawAimingDebugLine);
 
-		auto towardPlayerVector = player->GetActorLocation() - tank->GetActorLocation();
+		auto towardPlayerVector = player->GetActorLocation() - ControlledTank->GetActorLocation();
 		auto distanceToPlayerSqr = towardPlayerVector.SizeSquared();
 
 		// Move toward player if distance-to-player is bigger than AcceptanceDistance
@@ -31,11 +33,10 @@ void ATankAIController::Tick(float deltaTime)
 		}
 		else // Else angle the body to defend against player attack
 		{
-			auto rotateBodyThrottle = FVector::DotProduct(tank->GetActorRightVector(), towardPlayerVector);
+			auto rotateBodyThrottle = FVector::DotProduct(ControlledTank->GetActorRightVector(), towardPlayerVector);
 
-			if (rotateBodyThrottle > 0) tank->RotateBody(1);
-			else if (rotateBodyThrottle < 0) tank->RotateBody(-1);
+			if (rotateBodyThrottle > 0) ControlledTank->RotateBody(1);
+			else if (rotateBodyThrottle < 0) ControlledTank->RotateBody(-1);
 		}
-		
 	}
 }

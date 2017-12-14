@@ -12,8 +12,15 @@
 
 class AProjectile;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReloadGunDelegate, float, remainTime, float, reloadTime);
+UENUM(BlueprintType)
+enum class EMainWeaponState : uint8
+{
+	Aiming				UMETA(DisplayName = "Aiming"),
+	Reloading			UMETA(DisplayName = "Reloading"),
+	LockedAndLoaded		UMETA(DisplayName = "LockedAndLoaded"),
+};
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FMainWeaponStateChangeDelegate, EMainWeaponState, state, float, remainTime, float, reloadTime);
 
 /*
  * Tank aiming and firing handler
@@ -23,17 +30,22 @@ class UWOT_API UTankMainWeaponComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+private:
+	float BarrelDeltaPitch = 0; // Barrel elevation to be add in this tick
+	float TurretDeltaYaw = 0; // Turret rotation to be add in this tick
+
 protected:
 	UStaticMeshComponent * Turret = nullptr;
 	UStaticMeshComponent * Barrel = nullptr;
-	USceneComponent * FiringStartPosition = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Main Gun Properties")
+	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float ProjectileSpeed = 0;
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Main Gun Properties")
-		float ReloadTime = 0;
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Main Gun Properties")
+	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		TSubclassOf<AProjectile> Projectile = nullptr;
+	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float RemainReloadTime = 0;
+	UPROPERTY(EditDefaultsOnly, Category = "Components|Main Gun Properties")
+		float ReloadTime = 3;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float GunElevationAngle = 20;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
@@ -42,15 +54,15 @@ protected:
 		float BarrelElevationSpeed = 30;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float TurretRotationSpeed = 60;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components|Main Gun Properties")
-		TSubclassOf<AProjectile> Projectile = nullptr;
 
 public:
+	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		EMainWeaponState WeaponState = EMainWeaponState::Reloading;
 	UPROPERTY(BlueprintAssignable, Category = "Components|Main Gun Properties")
-		FReloadGunDelegate OnReloadGun;
+		FMainWeaponStateChangeDelegate OnMainWeaponStateChange;
 
 private:
-	void ElevateGun(const FVector & targetBarrelWorldDirection);
+	void ElevateBarrel(const FVector & targetBarrelWorldDirection);
 	void RotateTurret(const FVector & targetTurretWorldDirection);
 
 protected:
@@ -63,7 +75,7 @@ public:
 	UTankMainWeaponComponent();
 
 	UFUNCTION(BlueprintCallable)
-		void Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel, USceneComponent * firingPosition);
+		void Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel);
 
 	UFUNCTION(BlueprintCallable)
 		void AimGun(FVector const & targetLocation

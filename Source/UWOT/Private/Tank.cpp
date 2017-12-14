@@ -38,15 +38,3 @@ void ATank::RotateBody(const float throttleUnit)
 {
 	MovementComponent->MoveDirection = FVector2D(0, throttleUnit);
 }
-
-void ATank::AimGun(const FVector & targetLocation
-	, const ESuggestProjVelocityTraceOption::Type traceOption
-	, const bool bDrawDebug)
-{
-	MainWeaponComponent->AimGun(targetLocation, traceOption, bDrawDebug);
-}
-
-bool ATank::TryFireGun()
-{
-	return MainWeaponComponent->TryFireGun();
-}

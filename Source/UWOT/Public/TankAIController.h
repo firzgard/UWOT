@@ -17,6 +17,8 @@ class UWOT_API ATankAIController : public AAIController
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(BlueprintReadOnly)
+		ATank * ControlledTank;
 	// How far will the AI tank move toward player before stopping
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI Properties")
 		float AcceptanceDistance = 3000;

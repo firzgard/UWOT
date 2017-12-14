@@ -54,7 +54,8 @@ void UTankMovementComponent::RequestDirectMove(const FVector& moveVelocity, bool
 
 void UTankMovementComponent::Init (UTankTrack * leftTrack, UTankTrack * rightTrack)
 {
-	if(!leftTrack || !rightTrack) return;
+	checkf(leftTrack, TEXT("Failed to init MovementComponent. LeftTract == nullptr"));
+	checkf(rightTrack, TEXT("Failed to init MovementComponent. RightTract == nullptr"));
 
 	LeftTrack = leftTrack;
 	RightTrack = rightTrack;

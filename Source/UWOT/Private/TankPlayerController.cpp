@@ -7,6 +7,8 @@ void ATankPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	SetTickGroup(ETickingGroup::TG_PrePhysics);
+
+	ControlledTank = Cast<ATank>(GetPawn());
 }
 
 void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector &OutTargetPosition) const

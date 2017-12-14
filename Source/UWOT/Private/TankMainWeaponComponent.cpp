@@ -12,6 +12,7 @@ UTankMainWeaponComponent::UTankMainWeaponComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+	SetTickGroup(ETickingGroup::TG_StartPhysics);
 }
 
 
@@ -25,19 +26,65 @@ void UTankMainWeaponComponent::BeginPlay()
 void UTankMainWeaponComponent::TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction)
 {
 	Super::TickComponent(deltaTime, tickType, thisTickFunction);
-	
+
+	auto bWeaponStateChanged = false;
+
+	// Reload gun if needed
 	if (RemainReloadTime > 0)
 	{
 		RemainReloadTime = FMath::Clamp<float>(RemainReloadTime - deltaTime, 0, ReloadTime);
-		OnReloadGun.Broadcast(RemainReloadTime, ReloadTime);
+
+		WeaponState = EMainWeaponState::Reloading;
+		bWeaponStateChanged = true;
+	}
+	else if (WeaponState != EMainWeaponState::LockedAndLoaded)
+	{
+		WeaponState = EMainWeaponState::LockedAndLoaded;
+		bWeaponStateChanged = true;
+	}
+
+	// Rotate turret if RotateTurret() was called
+	if (FMath::Abs(TurretDeltaYaw) != 0)
+	{
+		Turret->AddRelativeRotation(FRotator(0, TurretDeltaYaw, 0));
+		TurretDeltaYaw = 0;
+
+		if (WeaponState == EMainWeaponState::LockedAndLoaded)
+		{
+			WeaponState = EMainWeaponState::Aiming;
+			bWeaponStateChanged = true;
+		}
+	}
+
+	// Elevate barrel if ElevateBarrel() was called
+	if (FMath::Abs(BarrelDeltaPitch) != 0)
+	{
+		// Clamp the local pitch to gun's current depression/elevation limit
+		const auto currentGunDepressionLimit = GunDepressionAngleCurve ? GunDepressionAngleCurve->GetFloatValue(Turret->GetRelativeRotationCache().GetCachedRotator().Yaw) : 0;
+		const auto clampedNewLocalPitch = FMath::Clamp<float>(Barrel->GetRelativeRotationCache().GetCachedRotator().Pitch + BarrelDeltaPitch, currentGunDepressionLimit, GunElevationAngle);
+
+		Barrel->SetRelativeRotation(FRotator(clampedNewLocalPitch, 0, 0));
+		BarrelDeltaPitch = 0;
+
+		if (WeaponState == EMainWeaponState::LockedAndLoaded)
+		{
+			WeaponState = EMainWeaponState::Aiming;
+			bWeaponStateChanged = true;
+		}
+	}
+
+	if (bWeaponStateChanged)
+	{
+		OnMainWeaponStateChange.Broadcast(WeaponState, RemainReloadTime, ReloadTime);
 	}
 }
 
 
 #pragma region PRIVATE
 
-void UTankMainWeaponComponent::ElevateGun(const FVector & targetBarrelWorldDirection)
+void UTankMainWeaponComponent::ElevateBarrel (const FVector & targetBarrelWorldDirection)
 {
+	UE_LOG(LogTemp, Warning, TEXT("targetBarrelWorldDirection: %s"), *targetBarrelWorldDirection.ToString());
 	// Find the delta between desired local pitch and current local pitch
 	// by projecting the desired world direction to the local pitch plane.
 	auto targetFiringLocalPitchDirection = targetBarrelWorldDirection - FVector::DotProduct(Barrel->GetRightVector(), targetBarrelWorldDirection) * Barrel->GetRightVector();
@@ -53,14 +100,10 @@ void UTankMainWeaponComponent::ElevateGun(const FVector & targetBarrelWorldDirec
 	const auto deltaBarrelElevationSpeed = BarrelElevationSpeed * GetWorld()->DeltaTimeSeconds;
 	const auto clampedDeltaPitch = FMath::Clamp<float>(correctedDeltaPitch, -deltaBarrelElevationSpeed, deltaBarrelElevationSpeed);
 
-	// Clamp the local pitch to gun's current depression/elevation limit
-	const auto currentGunDepressionLimit = GunDepressionAngleCurve->GetFloatValue(Turret->GetRelativeRotationCache().GetCachedRotator().Yaw);
-	const auto clampedNewLocalPitch = FMath::Clamp<float>(Barrel->GetRelativeRotationCache().GetCachedRotator().Pitch + clampedDeltaPitch, currentGunDepressionLimit, GunElevationAngle);
-
-	Barrel->SetRelativeRotation(FRotator(clampedNewLocalPitch, 0, 0));
+	BarrelDeltaPitch = clampedDeltaPitch;
 }
 
-void UTankMainWeaponComponent::RotateTurret(const FVector & targetTurretWorldDirection)
+void UTankMainWeaponComponent::RotateTurret (const FVector & targetTurretWorldDirection)
 {
 	// Find the delta between desired local yaw and current local yaw
 	// by projecting the desired world direction to the local yaw plane.
@@ -77,7 +120,7 @@ void UTankMainWeaponComponent::RotateTurret(const FVector & targetTurretWorldDir
 	const auto deltaTurretRotationSpeed = TurretRotationSpeed * GetWorld()->DeltaTimeSeconds;
 	const auto clampedDeltaYaw = FMath::Clamp<float>(correctedDeltaYaw, -deltaTurretRotationSpeed, deltaTurretRotationSpeed);
 
-	Turret->AddRelativeRotation(FRotator(0, clampedDeltaYaw, 0));
+	TurretDeltaYaw = clampedDeltaYaw;
 }
 
 #pragma endregion PRIVATE
@@ -85,12 +128,13 @@ void UTankMainWeaponComponent::RotateTurret(const FVector & targetTurretWorldDir
 
 #pragma region PUBLIC
 
-void UTankMainWeaponComponent::Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel, USceneComponent * firingPosition)
+void UTankMainWeaponComponent::Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel)
 {
-	if (!turret || !barrel || !firingPosition) return;
+	checkf(turret, TEXT("Failed to init MainWeaponComponent. Turret == nullptr"));
+	checkf(barrel, TEXT("Failed to init MainWeaponComponent. Barrel == nullptr"));
+
 	Turret = turret;
 	Barrel = barrel;
-	FiringStartPosition = firingPosition;
 }
 
 void UTankMainWeaponComponent::AimGun(const FVector & targetLocation
@@ -103,24 +147,24 @@ void UTankMainWeaponComponent::AimGun(const FVector & targetLocation
 
 	// Check aim solution
 	// Use straight line between target and firing location if no solution
-	if (!UGameplayStatics::SuggestProjectileVelocity(this, outVelocity, FiringStartPosition->GetComponentLocation(), targetLocation
+	if (!UGameplayStatics::SuggestProjectileVelocity(this, outVelocity, Barrel->GetComponentLocation(), targetLocation
 		, ProjectileSpeed
 		, false, 0, 0, traceOption
 		, FCollisionResponseParams::DefaultResponseParam
 		, TArray<AActor *>()
 		, bDrawDebug))
 	{
-		outVelocity = targetLocation - FiringStartPosition->GetComponentLocation();
+		outVelocity = targetLocation - Barrel->GetComponentLocation();
 	}
 
-	ElevateGun(outVelocity);
+	ElevateBarrel(outVelocity.GetSafeNormal());
 }
 
 bool UTankMainWeaponComponent::TryFireGun()
 {
 	if (RemainReloadTime > 0) return false;
 		
-	GetWorld()->SpawnActor<AProjectile>(Projectile, FiringStartPosition->GetComponentTransform());
+	GetWorld()->SpawnActor<AProjectile>(Projectile, Barrel->GetComponentTransform());
 	RemainReloadTime = ReloadTime;
 	return true;
 }

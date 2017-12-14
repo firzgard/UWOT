@@ -17,8 +17,8 @@ class UWOT_API ATank : public APawn
 {
 	GENERATED_BODY()
 
-protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 		UTankMainWeaponComponent* MainWeaponComponent = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 		UTankMovementComponent* MovementComponent = nullptr;
@@ -36,11 +36,4 @@ public:
 	void SetupPlayerInputComponent(class UInputComponent* playerInputComponent) override;
 
 	void RotateBody(const float throttleUnit);
-
-	UFUNCTION(BlueprintCallable, Category = "Input")
-		void AimGun(const FVector & targetLocation
-			, const ESuggestProjVelocityTraceOption::Type traceOption  = ESuggestProjVelocityTraceOption::DoNotTrace
-			, const bool bDrawDebug  = false);
-	UFUNCTION(BlueprintCallable, Category = "Input")
-		bool TryFireGun();
 };

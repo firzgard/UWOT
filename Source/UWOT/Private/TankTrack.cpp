@@ -6,6 +6,7 @@ void UTankTrack::OnRegister()
 {
 	Super::OnRegister();
 
+	SetTickGroup(ETickingGroup::TG_StartPhysics);
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
@@ -13,7 +14,7 @@ void UTankTrack::TickComponent(float deltaTime, ELevelTick tickType, FActorCompo
 {
 	Super::TickComponent(deltaTime, tickType, thisTickFunction);
 	
-	// Move the tank based on the setted throttle and the reset it
+	// Move the tank based on throttle and then reset it
 	if(Throttle != 0)
 	{
 		const auto appliedForce = GetForwardVector() * Throttle * MovingForce;

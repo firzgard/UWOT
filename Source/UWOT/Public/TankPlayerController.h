@@ -15,12 +15,14 @@ UCLASS()
 class UWOT_API ATankPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+		ATank * ControlledTank;
 	
 protected:
 	void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
 	void GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector& OutTargetPosition) const;
-
-public:
 };
