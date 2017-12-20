@@ -26,4 +26,3 @@ void AProjectile::Tick(float deltaTime)
 }
 
 float AProjectile::GetSpeed() const { return ProjectileMovementComponent->InitialSpeed; }
-float AProjectile::GetReloadTime() const { return ReloadTime; }

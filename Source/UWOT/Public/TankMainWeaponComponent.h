@@ -30,16 +30,16 @@ class UWOT_API UTankMainWeaponComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-private:
-	float BarrelDeltaPitch = 0; // Barrel elevation to be add in this tick
-	float TurretDeltaYaw = 0; // Turret rotation to be add in this tick
-
 protected:
 	UStaticMeshComponent * Turret = nullptr;
 	UStaticMeshComponent * Barrel = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		FVector DesiredWorldAimingDirection = FVector::OneVector;
+	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float ProjectileSpeed = 0;
+	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		float ProjectileLifeTimeSec = 3;
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		TSubclassOf<AProjectile> Projectile = nullptr;
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
@@ -54,6 +54,12 @@ protected:
 		float BarrelElevationSpeed = 30;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float TurretRotationSpeed = 60;
+	/** The spawn position of projectile will be offset forward from barrel's transform by this much cm */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		float FiringPositionOffset = 200;
+	/** Largest angle in degree between desired aiming angle and real barrel angle that aiming can be considered locked */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		float AimingLockAngleTolerance = 0.01;
 
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
@@ -62,8 +68,8 @@ public:
 		FMainWeaponStateChangeDelegate OnMainWeaponStateChange;
 
 private:
-	void ElevateBarrel(const FVector & targetBarrelWorldDirection);
-	void RotateTurret(const FVector & targetTurretWorldDirection);
+	void ElevateBarrel();
+	void RotateTurret();
 
 protected:
 	void BeginPlay() override;
@@ -87,4 +93,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void ChangeShellType(TSubclassOf<AProjectile> newShellType);
+
+	UFUNCTION(BlueprintCallable)
+		bool CheckIsTargetInAim(AActor * target) const;
 };

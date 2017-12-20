@@ -2,13 +2,12 @@
 
 #include "TankTrack.h"
 
-void UTankTrack::OnRegister()
+UTankTrack::UTankTrack()
 {
-	Super::OnRegister();
-
-	SetTickGroup(ETickingGroup::TG_StartPhysics);
 	PrimaryComponentTick.bCanEverTick = true;
+	SetTickGroup(ETickingGroup::TG_StartPhysics);
 }
+
 
 void UTankTrack::TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction)
 {

@@ -22,10 +22,11 @@ protected:
 		float MovingForce = 10000000;
 
 protected:
-	void OnRegister() override;
 	void TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
 
 public:
+	UTankTrack();
+
 	UFUNCTION(BlueprintCallable)
 		void SetThrottle(const float throttle);
 };
