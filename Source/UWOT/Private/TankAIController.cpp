@@ -1,9 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TankAIController.h"
+
 #include "Engine/World.h"
+#include "Kismet/GameplayStaticsTypes.h"
+
 #include "Tank.h"
 #include "TankMainWeaponComponent.h"
+
 
 void ATankAIController::BeginPlay()
 {
@@ -20,7 +24,7 @@ void ATankAIController::Tick(float deltaTime)
 
 	if (player && GetControlledTank())
 	{
-		ControlledTank->MainWeaponComponent->AimGun(player->GetActorLocation(), AimingTraceOption, bDrawAimingDebugLine);
+		ControlledTank->MainWeaponComponent->AimGun(player->GetActorLocation(), bDrawAimingDebugLine);
 
 		auto towardPlayerVector = player->GetActorLocation() - ControlledTank->GetActorLocation();
 

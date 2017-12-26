@@ -4,28 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "Kismet/GameplayStaticsTypes.h"
-#include "CollisionQueryParams.h"
-
 #include "TankMainWeaponComponent.generated.h"
 
+class UCurveFloat;
+class UStaticMeshComponent;
 class AProjectile;
 
-UENUM(BlueprintType)
-enum class EMainWeaponState : uint8
-{
-	Aiming				UMETA(DisplayName = "Aiming"),
-	Reloading			UMETA(DisplayName = "Reloading"),
-	LockedAndLoaded		UMETA(DisplayName = "LockedAndLoaded"),
-};
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FMainWeaponStateChangeDelegate, EMainWeaponState, state, float, remainTime, float, reloadTime);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FMainWeaponStateChangeDelegate, float, remainTime, float, reloadTime, bool, bTargetLockedOn);
 
 /*
  * Tank aiming and firing handler
  */
-UCLASS( ClassGroup=(UWOT), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(UWOT), meta=(BlueprintSpawnableComponent))
 class UWOT_API UTankMainWeaponComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -42,28 +32,33 @@ protected:
 		float ProjectileLifeTimeSec = 3;
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		TSubclassOf<AProjectile> Projectile = nullptr;
-	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
-		float RemainReloadTime = 0;
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Main Gun Properties")
-		float ReloadTime = 3;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float GunElevationAngle = 20;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
-		UCurveFloat* GunDepressionAngleCurve = nullptr;
+		UCurveFloat * GunDepressionAngleCurve = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float BarrelElevationSpeed = 30;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float TurretRotationSpeed = 60;
 	/** The spawn position of projectile will be offset forward from barrel's transform by this much cm */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
-		float FiringPositionOffset = 200;
+		float FiringPositionOffset = 300;
+	/** The spawn effect position of projectile will be offset forward from barrel's transform by this much cm */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		float FiringEffectPositionOffset = 500;
+
 	/** Largest angle in degree between desired aiming angle and real barrel angle that aiming can be considered locked */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float AimingLockAngleTolerance = 0.01;
 
 public:
-	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
-		EMainWeaponState WeaponState = EMainWeaponState::Reloading;
+	/** Current shell type's reload time. Readonly */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		float ReloadTime = 3;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		float RemainReloadTime = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Main Gun Properties")
+		bool bTargetLockedOn = false;
 	UPROPERTY(BlueprintAssignable, Category = "Components|Main Gun Properties")
 		FMainWeaponStateChangeDelegate OnMainWeaponStateChange;
 
@@ -84,9 +79,7 @@ public:
 		void Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel);
 
 	UFUNCTION(BlueprintCallable)
-		void AimGun(FVector const & targetLocation
-			, const ESuggestProjVelocityTraceOption::Type traceOption = ESuggestProjVelocityTraceOption::DoNotTrace
-			, const bool bDrawDebug = false);
+		void AimGun(FVector const & targetLocation, const bool bDrawDebug = false);
 
 	UFUNCTION(BlueprintCallable)
 		bool TryFireGun();

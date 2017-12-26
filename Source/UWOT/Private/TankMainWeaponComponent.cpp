@@ -1,9 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TankMainWeaponComponent.h"
-#include "Projectile.h"
+
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/GameplayStaticsTypes.h"
 #include "Components/StaticMeshComponent.h"
+
+#include "Projectile.h"
+
 
 
 // Sets default values for this component's properties
@@ -31,29 +36,22 @@ void UTankMainWeaponComponent::TickComponent(float deltaTime, ELevelTick tickTyp
 	if (RemainReloadTime > 0)
 	{
 		RemainReloadTime = FMath::Clamp<float>(RemainReloadTime - deltaTime, 0, ReloadTime);
-		WeaponState = EMainWeaponState::Reloading;
-		bWeaponStateChanged = true;
-	}
-	else if (WeaponState != EMainWeaponState::LockedAndLoaded)
-	{
-		WeaponState = EMainWeaponState::LockedAndLoaded;
 		bWeaponStateChanged = true;
 	}
 
 	RotateTurret();
 	ElevateBarrel();
 	
-	// Check if loaded and barrel is within lock angle tolerance
-	if(WeaponState == EMainWeaponState::LockedAndLoaded
-		&& FMath::Abs(FVector::DotProduct(DesiredWorldAimingDirection, Barrel->GetForwardVector())) < FMath::Cos(FMath::DegreesToRadians(AimingLockAngleTolerance)))
+	// Check if barrel is within desired lock angle tolerance. Update the flag
+	if(bTargetLockedOn != (FMath::Abs(FVector::DotProduct(DesiredWorldAimingDirection, Barrel->GetForwardVector())) > FMath::Cos(FMath::DegreesToRadians(AimingLockAngleTolerance))))
 	{
-		WeaponState = EMainWeaponState::Aiming;
+		bTargetLockedOn = !bTargetLockedOn;
 		bWeaponStateChanged = true;
 	}
 
 	if (bWeaponStateChanged)
 	{
-		OnMainWeaponStateChange.Broadcast(WeaponState, RemainReloadTime, ReloadTime);
+		OnMainWeaponStateChange.Broadcast(RemainReloadTime, ReloadTime, bTargetLockedOn);
 	}
 }
 
@@ -118,9 +116,7 @@ void UTankMainWeaponComponent::Init(UStaticMeshComponent * turret, UStaticMeshCo
 	Barrel = barrel;
 }
 
-void UTankMainWeaponComponent::AimGun(const FVector & targetLocation
-	, const ESuggestProjVelocityTraceOption::Type traceOption
-	, const bool bDrawDebug)
+void UTankMainWeaponComponent::AimGun(const FVector & targetLocation, const bool bDrawDebug)
 {
 	// Check aim solution
 	// Use straight line between target and firing location if no solution
@@ -140,24 +136,41 @@ void UTankMainWeaponComponent::AimGun(const FVector & targetLocation
 bool UTankMainWeaponComponent::TryFireGun()
 {
 	if (RemainReloadTime > 0) return false;
-		
-	auto projectile = GetWorld()->SpawnActor<AProjectile>(Projectile
-		, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringPositionOffset
-		, Barrel->GetComponentRotation());
+	
+	if(ensureMsgf(Projectile, TEXT("No Projectile specified.")))
+	{
+		auto projectile = GetWorld()->SpawnActor<AProjectile>(Projectile
+			, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringPositionOffset
+			, Barrel->GetComponentRotation());
 
-	projectile->SetLifeSpan(ProjectileLifeTimeSec);
+		projectile->SetLifeSpan(ProjectileLifeTimeSec);
 
-	RemainReloadTime = ReloadTime;
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Projectile.GetDefaultObject()->GetMuzzleBlastVfx()
+			, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringEffectPositionOffset
+			, Barrel->GetComponentRotation());
 
-	return true;
+		RemainReloadTime = ReloadTime;
+
+		return true;
+	}
+
+	return false;
 }
 
 void UTankMainWeaponComponent::ChangeShellType(TSubclassOf<AProjectile> newShellType)
 {
-	Projectile = newShellType;
-	RemainReloadTime = ReloadTime = newShellType->GetDefaultObject<AProjectile>()->ReloadTime;
-	ProjectileSpeed = newShellType->GetDefaultObject<AProjectile>()->GetSpeed();
-	ProjectileLifeTimeSec = newShellType->GetDefaultObject<AProjectile>()->LifeTimeSec;
+	if(newShellType)
+	{
+		Projectile = newShellType;
+		RemainReloadTime = ReloadTime = newShellType->GetDefaultObject<AProjectile>()->ReloadTime;
+		ProjectileSpeed = newShellType->GetDefaultObject<AProjectile>()->GetSpeed();
+		ProjectileLifeTimeSec = newShellType->GetDefaultObject<AProjectile>()->LifeTimeSec;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Trying to set invalid projectile."), *GetName());
+	}
+	
 }
 
 bool UTankMainWeaponComponent::CheckIsTargetInAim(AActor * target) const

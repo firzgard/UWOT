@@ -9,7 +9,7 @@
 /**
  * Used for driving force.
  */
-UCLASS(meta = (BlueprintSpawnableComponent))
+UCLASS(ClassGroup = (UWOT), meta = (BlueprintSpawnableComponent))
 class UWOT_API UTankTrack : public UStaticMeshComponent
 {
 	GENERATED_BODY()

@@ -20,21 +20,19 @@ private:
 	ATank * ControlledTank;
 
 public:
-	UPROPERTY(BlueprintReadWrite, Category = "AI Properties")
-		bool bFirable = true;
 	/** How far will the AI tank move toward player before stopping */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI Properties")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|AI Properties")
 		float AcceptanceDistance = 3000;
 	/** At which angle should the AI tank face player to increase effective armor */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI Properties")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|AI Properties")
 		float BestAngleDeg = 30;
-	/** Largest angle in degree between best angle and real angle that is considered acceptabel */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
+	/** Largest angle in degree between best angle and real angle that is considered acceptable */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|AI Properties")
 		float BestAngleToleranceDeg = 1;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Logging Properties")
-		TEnumAsByte<ESuggestProjVelocityTraceOption::Type> AimingTraceOption = ESuggestProjVelocityTraceOption::DoNotTrace;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Logging Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components|Logging Properties")
 		bool bDrawAimingDebugLine = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components|AI Properties")
+		bool bFirable = true;
 
 public:
 	void BeginPlay() override;

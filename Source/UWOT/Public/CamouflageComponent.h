@@ -21,15 +21,16 @@ protected:
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Camouflage")
-		float CamouflageRemainDuration = 0;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Camouflage")
 		float CamouflageDuration = 10;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Camouflage")
 		float CamouflageFullRecoverTime = 15;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Camouflage")
+		float CamouflageRemainDuration = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Camouflage")
 		bool bCamouflage = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Camouflage")
 		float CamouflageVisibility = 1;
+
 	UPROPERTY(BlueprintAssignable, Category = "Components|Camouflage")
 		FCamouflageChangeDelegate OnChangeCamouflage;
 
