@@ -32,12 +32,13 @@ protected:
 		float FullDamageRadius = 100;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
 		float DamageFalloff = 1;
-
 public:	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
 		float ReloadTime = 2;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
 		float LifeTimeSec = 10;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
+		float RecoilImpulse = 10000000;
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
 		AActor * ProjectileOwner = nullptr;
 

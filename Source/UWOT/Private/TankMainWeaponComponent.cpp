@@ -145,9 +145,13 @@ bool UTankMainWeaponComponent::TryFireGun()
 		projectile->SetLifeSpan(ProjectileLifeTimeSec);
 		projectile->ProjectileOwner = GetOwner();
 
+		// Add firing effect
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Projectile.GetDefaultObject()->GetMuzzleBlastVfx()
 			, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringEffectPositionOffset
 			, Barrel->GetComponentRotation());
+		
+		// Add recoil
+		Turret->AddImpulseAtLocation(-Barrel->GetForwardVector() * Projectile.GetDefaultObject()->RecoilImpulse, Barrel->GetComponentLocation());
 
 		RemainReloadTime = ReloadTime;
 
