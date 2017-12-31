@@ -16,13 +16,24 @@ void ATankAIController::BeginPlay()
 	SetTickGroup(ETickingGroup::TG_PrePhysics);
 }
 
+void ATankAIController::SetPawn(APawn* InPawn)
+{
+	Super::SetPawn(InPawn);
+
+	const auto tank = Cast<ATank>(InPawn);
+	if (tank)
+	{
+		ControlledTank = tank;
+	}
+}
+
 void ATankAIController::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);
 
 	auto player = GetWorld()->GetFirstPlayerController()->GetPawn();
 
-	if (player && GetControlledTank())
+	if (player && ControlledTank)
 	{
 		ControlledTank->MainWeaponComponent->AimGun(player->GetActorLocation(), bDrawAimingDebugLine);
 
@@ -38,10 +49,10 @@ void ATankAIController::Tick(float deltaTime)
 			// Rotate toward the best angled position
 			// There will be 2 such position, one on the left and other on the right
 			// Choose the position that player is facing toward, in advance of them moving forward
-			auto bestAngle = FVector::DotProduct(player->GetActorForwardVector(), GetActorRightVector()) > 0 ? BestAngleDeg : -BestAngleDeg;
+			auto bestAngle = (player->GetActorForwardVector() | GetActorRightVector()) > 0 ? BestAngleDeg : -BestAngleDeg;
 
 			auto bestAngleDirection = towardPlayerVector.RotateAngleAxis(bestAngle, GetActorUpVector()).GetSafeNormal();
-			auto rotateRightThrottle = FVector::DotProduct(bestAngleDirection, GetActorRightVector());
+			auto rotateRightThrottle = bestAngleDirection | GetActorRightVector();
 
 			if(FMath::Abs(rotateRightThrottle) > FMath::Sin(FMath::DegreesToRadians(BestAngleToleranceDeg)))
 			{
@@ -55,24 +66,17 @@ void ATankAIController::Tick(float deltaTime)
 				}
 			}
 		}
-		auto outResult = FPredictProjectilePathResult();
 		
-
 		// Firing action
-		if (bFirable && ControlledTank->MainWeaponComponent->CheckIsTargetInAim(player))
+		if (bFirable)
 		{
-			ControlledTank->MainWeaponComponent->TryFireGun();
+			// Fire if tracing hits player
+			auto outHitResult = FPredictProjectilePathResult();
+			ControlledTank->MainWeaponComponent->TraceProjectilePath(outHitResult);
+			if(outHitResult.HitResult.GetActor() == player)
+			{
+				ControlledTank->MainWeaponComponent->TryFireGun();
+			}
 		}
 	}
-}
-
-
-
-ATank * ATankAIController::GetControlledTank()
-{
-	if (!ControlledTank)
-	{
-		ControlledTank = Cast<ATank>(GetPawn());
-	}
-	return ControlledTank;
 }

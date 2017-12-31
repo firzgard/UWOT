@@ -55,11 +55,22 @@ void AProjectile::NotifyHit(UPrimitiveComponent* MyComp
 	
 	if (ensureMsgf(ImpactBlastVfx, TEXT("No ImpactBlast particle system specified.")))
 	{
+		SetRootComponent(ExplosionForceComponent);
 		ExplosionForceComponent->FireImpulse();
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactBlastVfx, CollisionMesh->GetComponentLocation());
-		FTimerHandle UnusedHandle;
 
-		SetActorEnableCollision(false);
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactBlastVfx, CollisionMesh->GetComponentLocation());
+		UGameplayStatics::ApplyRadialDamageWithFalloff(this, FullDamage, 0
+			, GetActorLocation()
+			, FullDamageRadius
+			, ExplosionForceComponent->Radius
+			, DamageFalloff
+			, UDamageType::StaticClass()
+			, TArray<AActor *>()
+			, ProjectileOwner
+			, ProjectileOwner ? ProjectileOwner->GetInstigatorController() : nullptr
+			, ECC_WorldStatic);
+
+		CollisionMesh->DestroyComponent();
 		// Somehow destroying this projectile now will not trigger OnHit on the other Actor/Component
 		// Delay destroy to next frame
 		GetWorldTimerManager().SetTimerForNextTick([this]()

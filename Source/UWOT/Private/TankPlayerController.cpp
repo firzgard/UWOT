@@ -2,13 +2,27 @@
 
 #include "TankPlayerController.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStaticsTypes.h"
+
+#include "TankMainWeaponComponent.h"
 
 void ATankPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	PrimaryActorTick.bCanEverTick = true;
 	SetTickGroup(ETickingGroup::TG_PrePhysics);
 }
+
+void ATankPlayerController::SetPawn(APawn* InPawn)
+{
+	Super::SetPawn(InPawn);
+
+	const auto tank = Cast<ATank>(InPawn);
+	ControlledTank = tank;
+	ReceiveSetTank(tank);
+}
+
 
 void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector &OutTargetPosition) const
 {
@@ -19,7 +33,7 @@ void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLo
 	auto lineTraceStartPos = CursorWorldLocation + CursorWorldDirection * LINE_TRACE_START_DISTANCE_FROM_CURSOR;
 	auto lineTraceEndPos = lineTraceStartPos + CursorWorldDirection * LineTraceRange;
 
-	if (GetWorld()->LineTraceSingleByChannel(OutHitresult, lineTraceStartPos, lineTraceEndPos, ECollisionChannel::ECC_Visibility))
+	if (GetWorld()->LineTraceSingleByChannel(OutHitresult, lineTraceStartPos, lineTraceEndPos, ECollisionChannel::ECC_Camera))
 	{
 		OutTargetPosition = OutHitresult.Location;
 	}
@@ -27,14 +41,5 @@ void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLo
 	{
 		OutTargetPosition = lineTraceEndPos;
 	}
-}
-
-ATank * ATankPlayerController::GetControlledTank()
-{
-	if(!ControlledTank)
-	{
-		ControlledTank = Cast<ATank>(GetPawn());
-	}
-	return ControlledTank;
 }
 

@@ -6,9 +6,10 @@
 #include "GameFramework/Pawn.h"
 #include "Tank.generated.h"
 
+class UCamouflageComponent;
+class UTankCameraMovementComponent;
 class UTankMainWeaponComponent;
 class UTankMovementComponent;
-class UCamouflageComponent;
 
 UCLASS()
 class UWOT_API ATank : public APawn
@@ -17,15 +18,18 @@ class UWOT_API ATank : public APawn
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UTankMainWeaponComponent* MainWeaponComponent = nullptr;
+		UTankCameraMovementComponent * CameraMovementComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UTankMovementComponent* MovementComponent = nullptr;
+		UTankMainWeaponComponent * MainWeaponComponent = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UCamouflageComponent* CamouflageComponent = nullptr;
+		UTankMovementComponent * MovementComponent = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		UCamouflageComponent * CamouflageComponent = nullptr;
 
 protected:
 	void BeginPlay() override;
 	void Tick(float deltaTime) override;
+	float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 public:
 	ATank();
@@ -34,4 +38,9 @@ public:
 	void SetupPlayerInputComponent(class UInputComponent* playerInputComponent) override;
 
 	void RotateBody(const float throttleUnit);
+
+	UFUNCTION(BlueprintCallable)
+		float GetHullAlignment() const;
+	UFUNCTION(BlueprintCallable)
+		float GetTurretAlignment() const;
 };

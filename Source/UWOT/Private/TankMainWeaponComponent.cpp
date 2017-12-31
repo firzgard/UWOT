@@ -4,7 +4,6 @@
 
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/GameplayStaticsTypes.h"
 #include "Components/StaticMeshComponent.h"
 
 #include "Projectile.h"
@@ -43,7 +42,7 @@ void UTankMainWeaponComponent::TickComponent(float deltaTime, ELevelTick tickTyp
 	ElevateBarrel();
 	
 	// Check if barrel is within desired lock angle tolerance. Update the flag
-	if(bTargetLockedOn != (FMath::Abs(FVector::DotProduct(DesiredWorldAimingDirection, Barrel->GetForwardVector())) > FMath::Cos(FMath::DegreesToRadians(AimingLockAngleTolerance))))
+	if(bTargetLockedOn != (FMath::Abs(DesiredWorldAimingDirection | Barrel->GetForwardVector()) > FMath::Cos(FMath::DegreesToRadians(AimingLockAngleTolerance))))
 	{
 		bTargetLockedOn = !bTargetLockedOn;
 		bWeaponStateChanged = true;
@@ -62,12 +61,12 @@ void UTankMainWeaponComponent::ElevateBarrel ()
 {
 	// Find the delta between desired local pitch and current local pitch
 	// by projecting the desired world direction to the local pitch plane.
-	auto targetFiringLocalPitchDirection = DesiredWorldAimingDirection - FVector::DotProduct(Barrel->GetRightVector(), DesiredWorldAimingDirection) * Barrel->GetRightVector();
+	auto targetFiringLocalPitchDirection = DesiredWorldAimingDirection - (Barrel->GetRightVector() | DesiredWorldAimingDirection) * Barrel->GetRightVector();
 	targetFiringLocalPitchDirection.Normalize();
-	const auto deltaPitch = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(targetFiringLocalPitchDirection, Barrel->GetForwardVector())));
+	const auto deltaPitch = FMath::RadiansToDegrees(FMath::Acos(targetFiringLocalPitchDirection | Barrel->GetForwardVector()));
 
 	// Correct deltaPitch direction
-	const auto correctedDeltaPitch = FVector::DotProduct(DesiredWorldAimingDirection, Barrel->GetUpVector()) > 0
+	const auto correctedDeltaPitch = (DesiredWorldAimingDirection | Barrel->GetUpVector()) > 0
 		? deltaPitch
 		: -deltaPitch;
 	
@@ -86,12 +85,12 @@ void UTankMainWeaponComponent::RotateTurret ()
 {
 	// Find the delta between desired local yaw and current local yaw
 	// by projecting the desired world direction to the local yaw plane.
-	auto targetFiringLocalYawDirection = DesiredWorldAimingDirection - FVector::DotProduct(Turret->GetUpVector(), DesiredWorldAimingDirection) * Turret->GetUpVector();
+	auto targetFiringLocalYawDirection = DesiredWorldAimingDirection - (Turret->GetUpVector() | DesiredWorldAimingDirection) * Turret->GetUpVector();
 	targetFiringLocalYawDirection.Normalize();
-	const auto deltaYaw = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(targetFiringLocalYawDirection, Turret->GetForwardVector())));
+	const auto deltaYaw = FMath::RadiansToDegrees(FMath::Acos(targetFiringLocalYawDirection | Turret->GetForwardVector()));
 
 	// Correct deltaYaw direction
-	auto correctedDeltaYaw = FVector::DotProduct(DesiredWorldAimingDirection, Turret->GetRightVector()) > 0
+	auto correctedDeltaYaw = (DesiredWorldAimingDirection | Turret->GetRightVector()) > 0
 		? deltaYaw
 		: -deltaYaw;
 
@@ -109,8 +108,8 @@ void UTankMainWeaponComponent::RotateTurret ()
 
 void UTankMainWeaponComponent::Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel)
 {
-	checkf(turret, TEXT("Failed to init MainWeaponComponent. Turret == nullptr"));
-	checkf(barrel, TEXT("Failed to init MainWeaponComponent. Barrel == nullptr"));
+	checkf(turret, TEXT("%s: Failed to init MainWeaponComponent. Turret == nullptr"), *GetOwner()->GetName());
+	checkf(barrel, TEXT("%s: Failed to init MainWeaponComponent. Barrel == nullptr"), *GetOwner()->GetName());
 
 	Turret = turret;
 	Barrel = barrel;
@@ -144,6 +143,7 @@ bool UTankMainWeaponComponent::TryFireGun()
 			, Barrel->GetComponentRotation());
 
 		projectile->SetLifeSpan(ProjectileLifeTimeSec);
+		projectile->ProjectileOwner = GetOwner();
 
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Projectile.GetDefaultObject()->GetMuzzleBlastVfx()
 			, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringEffectPositionOffset
@@ -168,21 +168,23 @@ void UTankMainWeaponComponent::ChangeShellType(TSubclassOf<AProjectile> newShell
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Trying to set invalid projectile."), *GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s: Trying to set invalid projectile."), *GetName());
 	}
 	
 }
 
-bool UTankMainWeaponComponent::CheckIsTargetInAim(AActor * target) const
+void UTankMainWeaponComponent::TraceProjectilePath(FPredictProjectilePathResult & outResult) const
 {
-	auto outResult = FPredictProjectilePathResult();
 	UGameplayStatics::PredictProjectilePath(this, FPredictProjectilePathParams(1
 		, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringPositionOffset
 		, Barrel->GetForwardVector() * ProjectileSpeed
 		, ProjectileLifeTimeSec
 		, ECC_WorldDynamic), outResult);
+}
 
-	return target == outResult.HitResult.Actor.Get();
+FVector UTankMainWeaponComponent::GetTurretForwardVector() const
+{
+	return Turret->GetForwardVector();
 }
 
 #pragma endregion PUBLIC

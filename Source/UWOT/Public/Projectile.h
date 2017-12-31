@@ -26,12 +26,20 @@ protected:
 		UParticleSystem * ImpactBlastVfx = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|FXs")
 		UParticleSystem * MuzzleBlastVfx = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
+		int FullDamage = 1000;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
+		float FullDamageRadius = 100;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
+		float DamageFalloff = 1;
 
 public:	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties")
-		float ReloadTime = 1;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
+		float ReloadTime = 2;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
 		float LifeTimeSec = 10;
+	UPROPERTY(BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
+		AActor * ProjectileOwner = nullptr;
 
 protected:
 	void BeginPlay() override;

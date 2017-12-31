@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Kismet/GameplayStaticsTypes.h"
 #include "TankMainWeaponComponent.generated.h"
 
 class UCurveFloat;
@@ -75,6 +76,8 @@ public:
 	// Sets default values for this component's properties
 	UTankMainWeaponComponent();
 
+	FVector GetTurretForwardVector() const;
+
 	UFUNCTION(BlueprintCallable)
 		void Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel);
 
@@ -88,5 +91,5 @@ public:
 		void ChangeShellType(TSubclassOf<AProjectile> newShellType);
 
 	UFUNCTION(BlueprintCallable)
-		bool CheckIsTargetInAim(AActor * target) const;
+		void TraceProjectilePath(FPredictProjectilePathResult & outResult) const;
 };

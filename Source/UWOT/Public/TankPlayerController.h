@@ -16,16 +16,18 @@ class UWOT_API ATankPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-private:
-	ATank * ControlledTank;
+public:
+	UPROPERTY(BlueprintReadOnly)
+		ATank * ControlledTank;
 	
 protected:
 	void BeginPlay() override;
+	void SetPawn(APawn* InPawn) override;
 
 	UFUNCTION(BlueprintCallable)
 		void GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector& OutTargetPosition) const;
 
 public:
-	UFUNCTION(BlueprintCallable)
-		ATank * GetControlledTank();
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetTank"))
+		void ReceiveSetTank(ATank * tank);
 };
