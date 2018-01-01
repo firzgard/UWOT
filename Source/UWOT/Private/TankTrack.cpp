@@ -17,7 +17,7 @@ void UTankTrack::TickComponent(float deltaTime, ELevelTick tickType, FActorCompo
 	if(Throttle != 0)
 	{
 		const auto appliedForce = GetForwardVector() * Throttle * MovingForce;
-		Cast<UPrimitiveComponent>(GetOwner()->GetRootComponent())->AddForceAtLocation(appliedForce, GetComponentLocation());
+		AddForceAtLocation(appliedForce, GetComponentLocation());
 		Throttle = 0;
 	}
 }

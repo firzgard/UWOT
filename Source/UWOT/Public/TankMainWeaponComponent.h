@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Curves/CurveFloat.h"
 #include "Kismet/GameplayStaticsTypes.h"
 #include "TankMainWeaponComponent.generated.h"
 
-class UCurveFloat;
 class UStaticMeshComponent;
 class AProjectile;
 
@@ -36,7 +36,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float GunElevationAngle = 20;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
-		UCurveFloat * GunDepressionAngleCurve = nullptr;
+		FRuntimeFloatCurve GunDepressionAngleCurve;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float BarrelElevationSpeed = 30;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")

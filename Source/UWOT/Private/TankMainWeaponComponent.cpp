@@ -75,7 +75,7 @@ void UTankMainWeaponComponent::ElevateBarrel ()
 	const auto clampedDeltaPitch = FMath::Clamp<float>(correctedDeltaPitch, -deltaBarrelElevationSpeed, deltaBarrelElevationSpeed);
 
 	// Clamp the local pitch to gun's current depression/elevation limit
-	const auto currentGunDepressionLimit = GunDepressionAngleCurve ? GunDepressionAngleCurve->GetFloatValue(Turret->RelativeRotation.Yaw) : 0;
+	const auto currentGunDepressionLimit = GunDepressionAngleCurve.GetRichCurveConst()->Eval(Turret->RelativeRotation.Yaw);
 	const auto clampedNewLocalPitch = FMath::Clamp<float>(Barrel->RelativeRotation.Pitch + clampedDeltaPitch, currentGunDepressionLimit, GunElevationAngle);
 
 	Barrel->SetRelativeRotation(FRotator(clampedNewLocalPitch, 0, 0));
