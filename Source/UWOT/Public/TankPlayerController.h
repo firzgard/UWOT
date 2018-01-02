@@ -29,5 +29,5 @@ protected:
 
 public:
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetTank"))
-		void ReceiveSetTank(ATank * tank);
+		void ReceiveSetTank(ATank * lastTank);
 };

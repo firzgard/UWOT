@@ -19,8 +19,9 @@ void ATankPlayerController::SetPawn(APawn* InPawn)
 	Super::SetPawn(InPawn);
 
 	const auto tank = Cast<ATank>(InPawn);
+	const auto lastTank = ControlledTank;
 	ControlledTank = tank;
-	ReceiveSetTank(tank);
+	ReceiveSetTank(lastTank);
 }
 
 

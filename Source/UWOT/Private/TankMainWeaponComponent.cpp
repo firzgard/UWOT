@@ -37,38 +37,39 @@ void UTankMainWeaponComponent::TickComponent(float deltaTime, ELevelTick tickTyp
 		RemainReloadTime = FMath::Clamp<float>(RemainReloadTime - deltaTime, 0, ReloadTime);
 		bWeaponStateChanged = true;
 	}
-
-	RotateTurret();
-	ElevateBarrel();
 	
-	// Check if barrel is within desired lock angle tolerance. Update the flag
-	if(bTargetLockedOn != (FMath::Abs(DesiredWorldAimingDirection | Barrel->GetForwardVector()) > FMath::Cos(FMath::DegreesToRadians(AimingLockAngleTolerance))))
+	// Adjust gun if still aiming
+	if(!bLockGun && !bAimingCompleted)
 	{
-		bTargetLockedOn = !bTargetLockedOn;
+		AdjustTurretRotation();
+		AdjustBarrelElevation();
+	}
+
+	// Check if aiming is completed, with consider for the lock angle tolerance. Update flag if neccessary
+	if(!bLockGun && bAimingCompleted != (FMath::Abs(DesiredWorldAimingDirection | Barrel->GetForwardVector()) > FMath::Cos(FMath::DegreesToRadians(AimingCompletedAngleTolerance))))
+	{
+		bAimingCompleted = !bAimingCompleted;
 		bWeaponStateChanged = true;
 	}
 
 	if (bWeaponStateChanged)
 	{
-		OnMainWeaponStateChange.Broadcast(RemainReloadTime, ReloadTime, bTargetLockedOn);
+		OnMainWeaponStateChange.Broadcast(RemainReloadTime, ReloadTime, bAimingCompleted);
 	}
 }
 
 
 #pragma region PRIVATE
 
-void UTankMainWeaponComponent::ElevateBarrel ()
+void UTankMainWeaponComponent::AdjustBarrelElevation()
 {
 	// Find the delta between desired local pitch and current local pitch
 	// by projecting the desired world direction to the local pitch plane.
-	auto targetFiringLocalPitchDirection = DesiredWorldAimingDirection - (Barrel->GetRightVector() | DesiredWorldAimingDirection) * Barrel->GetRightVector();
-	targetFiringLocalPitchDirection.Normalize();
+	const auto targetFiringLocalPitchDirection = FVector::VectorPlaneProject(DesiredWorldAimingDirection, Barrel->GetRightVector()).GetSafeNormal();
 	const auto deltaPitch = FMath::RadiansToDegrees(FMath::Acos(targetFiringLocalPitchDirection | Barrel->GetForwardVector()));
 
 	// Correct deltaPitch direction
-	const auto correctedDeltaPitch = (DesiredWorldAimingDirection | Barrel->GetUpVector()) > 0
-		? deltaPitch
-		: -deltaPitch;
+	const auto correctedDeltaPitch = (DesiredWorldAimingDirection | Barrel->GetUpVector()) > 0 ? deltaPitch : -deltaPitch;
 	
 	// Clamp the delta pitch for this frame
 	const auto deltaBarrelElevationSpeed = BarrelElevationSpeed * GetWorld()->DeltaTimeSeconds;
@@ -81,18 +82,15 @@ void UTankMainWeaponComponent::ElevateBarrel ()
 	Barrel->SetRelativeRotation(FRotator(clampedNewLocalPitch, 0, 0));
 }
 
-void UTankMainWeaponComponent::RotateTurret ()
+void UTankMainWeaponComponent::AdjustTurretRotation()
 {
 	// Find the delta between desired local yaw and current local yaw
 	// by projecting the desired world direction to the local yaw plane.
-	auto targetFiringLocalYawDirection = DesiredWorldAimingDirection - (Turret->GetUpVector() | DesiredWorldAimingDirection) * Turret->GetUpVector();
-	targetFiringLocalYawDirection.Normalize();
+	const auto targetFiringLocalYawDirection = FVector::VectorPlaneProject(DesiredWorldAimingDirection, Turret->GetUpVector()).GetSafeNormal();
 	const auto deltaYaw = FMath::RadiansToDegrees(FMath::Acos(targetFiringLocalYawDirection | Turret->GetForwardVector()));
 
 	// Correct deltaYaw direction
-	auto correctedDeltaYaw = (DesiredWorldAimingDirection | Turret->GetRightVector()) > 0
-		? deltaYaw
-		: -deltaYaw;
+	const auto correctedDeltaYaw = (DesiredWorldAimingDirection | Turret->GetRightVector()) > 0 ? deltaYaw : -deltaYaw;
 
 	// Clamp the delta yaw for this frame
 	const auto deltaTurretRotationSpeed = TurretRotationSpeed * GetWorld()->DeltaTimeSeconds;

@@ -50,7 +50,7 @@ protected:
 
 	/** Largest angle in degree between desired aiming angle and real barrel angle that aiming can be considered locked */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Main Gun Properties")
-		float AimingLockAngleTolerance = 0.01;
+		float AimingCompletedAngleTolerance = 0.03;
 
 public:
 	/** Current shell type's reload time. Readonly */
@@ -59,13 +59,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float RemainReloadTime = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Main Gun Properties")
-		bool bTargetLockedOn = false;
+		bool bAimingCompleted = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components|Main Gun Properties")
+		bool bLockGun = false;
+
 	UPROPERTY(BlueprintAssignable, Category = "Components|Main Gun Properties")
 		FMainWeaponStateChangeDelegate OnMainWeaponStateChange;
 
 private:
-	void ElevateBarrel();
-	void RotateTurret();
+	void AdjustBarrelElevation();
+	void AdjustTurretRotation();
 
 protected:
 	void BeginPlay() override;

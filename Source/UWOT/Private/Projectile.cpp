@@ -6,7 +6,6 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/RadialForceComponent.h"
-#include "PhysicsEngine/RadialForceActor.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 
