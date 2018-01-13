@@ -44,7 +44,7 @@ void ATank::SetupPlayerInputComponent(UInputComponent* playerInputComponent)
 
 void ATank::RotateBody(const float throttleUnit)
 {
-	MovementComponent->MoveDirection = FVector2D(0, throttleUnit);
+//	MovementComponent->MoveDirection = FVector2D(0, throttleUnit);
 }
 
 float ATank::GetHullAlignment() const

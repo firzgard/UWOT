@@ -16,6 +16,10 @@ class UWOT_API ATank : public APawn
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY()
+		FVector2D DesiredMoveDirectionInput;
+
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UTankCameraMovementComponent * CameraMovementComponent = nullptr;
