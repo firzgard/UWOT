@@ -34,6 +34,7 @@ protected:
 	void BeginPlay() override;
 	void Tick(float deltaTime) override;
 	float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	void DisplayDebug(class UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
 
 public:
 	ATank();

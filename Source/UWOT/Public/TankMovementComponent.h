@@ -7,7 +7,7 @@
 #include "WheeledVehicleMovementComponent4W.h"
 #include "TankMovementComponent.generated.h"
 
-class UTankTrack;
+class UTrackComponent;
 
 // TODO: Implement realistic tank steering
 UENUM()
@@ -39,8 +39,8 @@ class UWOT_API UTankMovementComponent : public UWheeledVehicleMovementComponent
 	GENERATED_BODY()
 
 protected:
-	UTankTrack* LeftTrack = nullptr;
-	UTankTrack* RightTrack = nullptr;
+	UTrackComponent * LeftTrack = nullptr;
+	UTrackComponent * RightTrack = nullptr;
 
 	UPROPERTY(Transient, Replicated)
 		FReplicatedTankState ReplicatedTankState;
@@ -103,6 +103,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = MechanicalSetup)
 		FVehicleTransmissionData TransmissionSetup;
 
+	UPROPERTY(EditAnywhere, Category = MechanicalSetup)
+		int LeftSprocketWheelIndex = 0;
+
+	UPROPERTY(EditAnywhere, Category = MechanicalSetup)
+		int RightSprocketWheelIndex = 1;
+
 	/** Maximum steering versus forward speed (km/h) */
 	UPROPERTY(EditAnywhere, Category = SteeringSetup)
 		FRuntimeFloatCurve SteeringCurve;
@@ -138,6 +144,7 @@ private:
 protected:
 
 	void PreTick(float DeltaTime) override;
+	void TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
 
 	#if WITH_EDITOR
 		void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -163,7 +170,7 @@ public:
 	void ClearInput() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Setup")
-		void Init(UTankTrack * leftTrackInstance, UTankTrack * rightTrackInstace);
+		void Init(UTrackComponent * leftTrackInstance, UTrackComponent * rightTrackInstace);
 
 	/** Calls Torque On Left Caterpillar*/
 	UFUNCTION(BlueprintCallable, Category = "Game|Components|TankMovement")

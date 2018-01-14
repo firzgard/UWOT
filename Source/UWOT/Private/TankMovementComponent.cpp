@@ -8,7 +8,7 @@
 #include "PhysXPublic.h"
 #include "UnrealNetwork.h"
 
-#include "TankTrack.h"
+#include "TrackComponent.h"
 
 
 #pragma region HELPERS
@@ -246,6 +246,36 @@ void UTankMovementComponent::PreTick(float DeltaTime)
 	}
 }
 
+void UTankMovementComponent::TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction)
+{
+	// Update track animation
+	for (auto i = 0; i < Wheels.Num(); i++)
+	{
+		if (i % 2 == 0)
+		{
+			if (LeftTrack)
+			{
+				LeftTrack->AdjustSpline(i, Wheels[i]->Location, Wheels[i]->ShapeRadius);
+			}
+		}
+		else
+		{
+			if (RightTrack)
+			{
+				RightTrack->AdjustSpline(i, Wheels[i]->Location, Wheels[i]->ShapeRadius);
+			}
+		}
+	}
+	if(LeftTrack)
+	{
+		LeftTrack->AnimateTrack(PVehicle->mWheelsDynData.getWheelRotationSpeed(0) * deltaTime * Wheels[LeftSprocketWheelIndex]->ShapeRadius);
+	}
+	if (RightTrack)
+	{
+		RightTrack->AnimateTrack(PVehicle->mWheelsDynData.getWheelRotationSpeed(1) * deltaTime * Wheels[RightSprocketWheelIndex]->ShapeRadius);
+	}
+}
+
 #if WITH_EDITOR
 void UTankMovementComponent::PostEditChangeProperty(struct FPropertyChangedEvent& propertyChangedEvent)
 {
@@ -410,12 +440,16 @@ void UTankMovementComponent::SetupVehicle()
 
 	auto pVehicleDriveTank = PxVehicleDriveTank::allocate(WheelSetups.Num());
 	check(pVehicleDriveTank);
+	pVehicleDriveTank->setDriveModel(PxVehicleDriveTankControlModel::eSPECIAL);
 
-	pVehicleDriveTank->setup(GPhysXSDK, UpdatedPrimitive->GetBodyInstance()->GetPxRigidDynamic_AssumesLocked(), *pWheelsSimData, driveData, 0);
-	pVehicleDriveTank->setToRestState();
+	ExecuteOnPxRigidDynamicReadWrite(UpdatedPrimitive->GetBodyInstance(), [&](PxRigidDynamic* PRigidDynamic)
+	{
+		pVehicleDriveTank->setup(GPhysXSDK, UpdatedPrimitive->GetBodyInstance()->GetPxRigidDynamic_AssumesLocked(), *pWheelsSimData, driveData, 0);
+		pVehicleDriveTank->setToRestState();
 
-	// cleanup
-	pWheelsSimData->free();
+		// cleanup
+		pWheelsSimData->free();
+	});
 
 	// cache values
 	PVehicle = pVehicleDriveTank;
@@ -436,7 +470,6 @@ void UTankMovementComponent::UpdateSimulation(float DeltaTime)
 	rawInputData.setAnalogRightThrust(RightThrustInput);
 	rawInputData.setAnalogLeftBrake(BrakeLeftInput);
 	rawInputData.setAnalogRightBrake(BrakeRightInput);
-
 	
 	if (!GetUseAutoGears())
 	{
@@ -571,7 +604,7 @@ void UTankMovementComponent::ClearInput()
 
 
 
-void UTankMovementComponent::Init(UTankTrack * leftTrack, UTankTrack * rightTrack)
+void UTankMovementComponent::Init(UTrackComponent * leftTrack, UTrackComponent * rightTrack)
 {
 //	checkf(leftTrack, TEXT("Failed to init MovementComponent. LeftTract == nullptr"));
 //	checkf(rightTrack, TEXT("Failed to init MovementComponent. RightTract == nullptr"));
@@ -613,7 +646,6 @@ void UTankMovementComponent::SetSteeringDirection(const FVector2D desiredSteerin
 		if(RawBrakeLeftInput == 0)
 		{
 			SetLeftBrakeInput(LeftBrakeSteeringAngleMappingCurve.GetRichCurveConst()->Eval(steeringAngle));
-			
 		}
 		if(RawBrakeRightInput == 0)
 		{

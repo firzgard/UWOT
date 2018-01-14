@@ -2,6 +2,8 @@
 
 #include "Tank.h"
 
+#include "DisplayDebugHelpers.h"
+
 #include "CamouflageComponent.h"
 #include "TankCameraMovementComponent.h"
 #include "TankMainWeaponComponent.h"
@@ -36,6 +38,20 @@ float ATank::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AControll
 
 	return Damage;
 }
+
+void ATank::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
+{
+	static FName NAME_Vehicle = FName(TEXT("Vehicle"));
+
+	Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
+
+	if (DebugDisplay.IsDisplayOn(NAME_Vehicle))
+	{
+		MovementComponent->DrawDebug(Canvas, YL, YPos);
+	}
+}
+
+
 
 void ATank::SetupPlayerInputComponent(UInputComponent* playerInputComponent)
 {
