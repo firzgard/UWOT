@@ -2,12 +2,12 @@
 
 #include "TankAIController.h"
 
-#include "Engine/World.h"
-#include "Kismet/GameplayStaticsTypes.h"
-
 #include "Tank.h"
 #include "TankMainWeaponComponent.h"
+#include "TankMovementComponent.h"
 
+#include "Engine/World.h"
+#include "Kismet/GameplayStaticsTypes.h"
 
 void ATankAIController::BeginPlay()
 {
@@ -56,13 +56,18 @@ void ATankAIController::Tick(float deltaTime)
 
 			if(FMath::Abs(rotateRightThrottle) > FMath::Sin(FMath::DegreesToRadians(BestAngleToleranceDeg)))
 			{
+				ControlledTank->MovementComponent->SetTargetGear(1, false);
+				ControlledTank->MovementComponent->SetThrottleInput(1);
+
 				if (rotateRightThrottle > 0)
 				{
-					ControlledTank->RotateBody(1);
+					ControlledTank->MovementComponent->SetLeftThrustInput(1);
+					ControlledTank->MovementComponent->SetRightThrustInput(-1);
 				}
 				else if (rotateRightThrottle < 0)
 				{
-					ControlledTank->RotateBody(-1);
+					ControlledTank->MovementComponent->SetLeftThrustInput(-1);
+					ControlledTank->MovementComponent->SetRightThrustInput(1);
 				}
 			}
 		}

@@ -3,11 +3,12 @@
 #include "Projectile.h"
 
 #include "Components/StaticMeshComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "PhysicsEngine/RadialForceComponent.h"
-#include "TimerManager.h"
 #include "Engine/World.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "PhysicsEngine/RadialForceComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "TimerManager.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -26,7 +27,23 @@ AProjectile::AProjectile()
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(FName("MovementComponent"));
 
 	ExplosionForceComponent = CreateDefaultSubobject<URadialForceComponent>(FName("ExplosionForceComponent"));
-	ExplosionForceComponent->AttachToComponent(CollisionMesh, FAttachmentTransformRules::KeepRelativeTransform);
+	ExplosionForceComponent->SetupAttachment(CollisionMesh);
+}
+
+void AProjectile::Fire(AActor * owner)
+{
+	SetOwner(owner);
+	SetLifeSpan(LifeTimeSec);
+
+	// Add firing effect
+	if(MuzzleBlastVfx)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MuzzleBlastVfx, CollisionMesh->GetComponentTransform());
+	}
+	if(MuzzleBlastSfx)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, MuzzleBlastSfx, CollisionMesh->GetComponentLocation());
+	}
 }
 
 // Called when the game starts or when spawned
@@ -57,7 +74,17 @@ void AProjectile::NotifyHit(UPrimitiveComponent* MyComp
 		SetRootComponent(ExplosionForceComponent);
 		ExplosionForceComponent->FireImpulse();
 
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactBlastVfx, CollisionMesh->GetComponentLocation());
+		// Spawn fxs
+		if(ImpactBlastSfx)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactBlastVfx, CollisionMesh->GetComponentTransform());
+		}
+		if(ImpactBlastVfx)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, ImpactBlastSfx, CollisionMesh->GetComponentLocation());
+		}
+
+		// Apply dmg
 		UGameplayStatics::ApplyRadialDamageWithFalloff(this, FullDamage, 0
 			, GetActorLocation()
 			, FullDamageRadius
@@ -65,8 +92,8 @@ void AProjectile::NotifyHit(UPrimitiveComponent* MyComp
 			, DamageFalloff
 			, UDamageType::StaticClass()
 			, TArray<AActor *>()
-			, ProjectileOwner
-			, ProjectileOwner ? ProjectileOwner->GetInstigatorController() : nullptr
+			, GetOwner()
+			, GetOwner() ? GetOwner()->GetInstigatorController() : nullptr
 			, ECC_WorldStatic);
 
 		CollisionMesh->DestroyComponent();

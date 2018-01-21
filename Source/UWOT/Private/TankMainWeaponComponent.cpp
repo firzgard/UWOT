@@ -2,12 +2,13 @@
 
 #include "TankMainWeaponComponent.h"
 
-#include "Engine/World.h"
-#include "Kismet/GameplayStatics.h"
-#include "Components/StaticMeshComponent.h"
-
 #include "Projectile.h"
 
+#include "Engine/World.h"
+#include "Components/AudioComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 
 // Sets default values for this component's properties
@@ -29,32 +30,56 @@ void UTankMainWeaponComponent::TickComponent(float deltaTime, ELevelTick tickTyp
 {
 	Super::TickComponent(deltaTime, tickType, thisTickFunction);
 
-	auto bWeaponStateChanged = false;
+	if(bBlueprintInitialized)
+	{
+		auto bWeaponStateChanged = false;
 
-	// Reload gun if needed
-	if (RemainReloadTime > 0)
-	{
-		RemainReloadTime = FMath::Clamp<float>(RemainReloadTime - deltaTime, 0, ReloadTime);
-		bWeaponStateChanged = true;
-	}
-	
-	// Adjust gun if still aiming
-	if(!bLockGun && !bAimingCompleted)
-	{
-		AdjustTurretRotation();
-		AdjustBarrelElevation();
-	}
+		// Reload gun if needed
+		if (RemainReloadTime > 0)
+		{
+			RemainReloadTime = FMath::Clamp<float>(RemainReloadTime - deltaTime, 0, ReloadTime);
+			bWeaponStateChanged = true;
 
-	// Check if aiming is completed, with consider for the lock angle tolerance. Update flag if neccessary
-	if(!bLockGun && bAimingCompleted != (FMath::Abs(DesiredWorldAimingDirection | Barrel->GetForwardVector()) > FMath::Cos(FMath::DegreesToRadians(AimingCompletedAngleTolerance))))
-	{
-		bAimingCompleted = !bAimingCompleted;
-		bWeaponStateChanged = true;
-	}
+			// Play reload gun before reload is about to complete
+			if(!bReloadCompleteSfxPlayed && ReloadCompleteSFX && ReloadCompleteSFXPreStartOffsetSec > RemainReloadTime)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, ReloadCompleteSFX, Turret->GetComponentLocation());
+				bReloadCompleteSfxPlayed = true;
+			}
+		}
 
-	if (bWeaponStateChanged)
-	{
-		OnMainWeaponStateChange.Broadcast(RemainReloadTime, ReloadTime, bAimingCompleted);
+		// Adjust gun if still aiming
+		if (!bLockGun && !bAimingCompleted)
+		{
+			AdjustTurretRotation();
+			AdjustBarrelElevation();
+
+			if (TurretRotateAudioComponent && !bTurretRotateSfxPlaying)
+			{
+				bTurretRotateSfxPlaying = true;
+				TurretRotateAudioComponent->Play();
+			}
+		}
+		else
+		{
+			if (TurretRotateAudioComponent && bTurretRotateSfxPlaying)
+			{
+				bTurretRotateSfxPlaying = false;
+				TurretRotateAudioComponent->FadeOut(TurretRotationSfxFadeOutTime, 0);
+			}
+		}
+
+		// Check if aiming is completed, with consider for the lock angle tolerance. Update flag if neccessary
+		if (!bLockGun && bAimingCompleted != (FMath::Abs(DesiredWorldAimingDirection | Barrel->GetForwardVector()) > FMath::Cos(FMath::DegreesToRadians(AimingCompletedAngleTolerance))))
+		{
+			bAimingCompleted = !bAimingCompleted;
+			bWeaponStateChanged = true;
+		}
+
+		if (bWeaponStateChanged)
+		{
+			OnMainWeaponStateChange.Broadcast(RemainReloadTime, ReloadTime, bAimingCompleted);
+		}
 	}
 }
 
@@ -111,23 +136,33 @@ void UTankMainWeaponComponent::Init(UStaticMeshComponent * turret, UStaticMeshCo
 
 	Turret = turret;
 	Barrel = barrel;
+
+	bBlueprintInitialized = true;
+}
+
+void UTankMainWeaponComponent::SetTurretRotateAudioComponent(UAudioComponent* turretAudio)
+{
+	TurretRotateAudioComponent = turretAudio;
 }
 
 void UTankMainWeaponComponent::AimGun(const FVector & targetLocation, const bool bDrawDebug)
 {
-	// Check aim solution
-	// Use straight line between target and firing location if no solution
-	if (!UGameplayStatics::SuggestProjectileVelocity(this, DesiredWorldAimingDirection, Barrel->GetComponentLocation(), targetLocation
-		, ProjectileSpeed
-		, false, 0, 0, ESuggestProjVelocityTraceOption::DoNotTrace
-		, FCollisionResponseParams::DefaultResponseParam
-		, TArray<AActor *>()
-		, bDrawDebug))
+	if(bBlueprintInitialized)
 	{
-		DesiredWorldAimingDirection = targetLocation - Barrel->GetComponentLocation();
-	}
+		// Check aim solution
+		// Use straight line between target and firing location if no solution
+		if (!UGameplayStatics::SuggestProjectileVelocity(this, DesiredWorldAimingDirection, Barrel->GetComponentLocation(), targetLocation
+			, ProjectileSpeed
+			, false, 0, 0, ESuggestProjVelocityTraceOption::DoNotTrace
+			, FCollisionResponseParams::DefaultResponseParam
+			, TArray<AActor *>()
+			, bDrawDebug))
+		{
+			DesiredWorldAimingDirection = targetLocation - Barrel->GetComponentLocation();
+		}
 
-	DesiredWorldAimingDirection.Normalize();
+		DesiredWorldAimingDirection.Normalize();
+	}
 }
 
 bool UTankMainWeaponComponent::TryFireGun()
@@ -140,18 +175,12 @@ bool UTankMainWeaponComponent::TryFireGun()
 			, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringPositionOffset
 			, Barrel->GetComponentRotation());
 
-		projectile->SetLifeSpan(ProjectileLifeTimeSec);
-		projectile->ProjectileOwner = GetOwner();
+		projectile->Fire(GetOwner());
 
-		// Add firing effect
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Projectile.GetDefaultObject()->GetMuzzleBlastVfx()
-			, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringEffectPositionOffset
-			, Barrel->GetComponentRotation());
-		
 		// Add recoil
 		Turret->AddImpulseAtLocation(-Barrel->GetForwardVector() * Projectile.GetDefaultObject()->RecoilImpulse, Barrel->GetComponentLocation());
 
-		RemainReloadTime = ReloadTime;
+		Reload();
 
 		return true;
 	}
@@ -164,9 +193,11 @@ void UTankMainWeaponComponent::ChangeShellType(TSubclassOf<AProjectile> newShell
 	if(newShellType)
 	{
 		Projectile = newShellType;
-		RemainReloadTime = ReloadTime = newShellType->GetDefaultObject<AProjectile>()->ReloadTime;
 		ProjectileSpeed = newShellType->GetDefaultObject<AProjectile>()->GetSpeed();
 		ProjectileLifeTimeSec = newShellType->GetDefaultObject<AProjectile>()->LifeTimeSec;
+
+		ReloadTime = newShellType->GetDefaultObject<AProjectile>()->ReloadTime;
+		Reload();
 	}
 	else
 	{
@@ -175,18 +206,27 @@ void UTankMainWeaponComponent::ChangeShellType(TSubclassOf<AProjectile> newShell
 	
 }
 
+void UTankMainWeaponComponent::Reload()
+{
+	RemainReloadTime = ReloadTime;
+	bReloadCompleteSfxPlayed = false;
+}
+
 void UTankMainWeaponComponent::TraceProjectilePath(FPredictProjectilePathResult & outResult) const
 {
-	UGameplayStatics::PredictProjectilePath(this, FPredictProjectilePathParams(1
-		, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringPositionOffset
-		, Barrel->GetForwardVector() * ProjectileSpeed
-		, ProjectileLifeTimeSec
-		, ECC_WorldDynamic), outResult);
+	if (bBlueprintInitialized)
+	{
+		UGameplayStatics::PredictProjectilePath(this, FPredictProjectilePathParams(1
+			, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringPositionOffset
+			, Barrel->GetForwardVector() * ProjectileSpeed
+			, ProjectileLifeTimeSec
+			, ECC_WorldDynamic), outResult);
+	}
 }
 
 FVector UTankMainWeaponComponent::GetTurretForwardVector() const
 {
-	return Turret->GetForwardVector();
+	return bBlueprintInitialized ? Turret->GetForwardVector() : FVector::ForwardVector;
 }
 
 #pragma endregion PUBLIC

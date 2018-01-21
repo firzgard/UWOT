@@ -266,6 +266,7 @@ void UTankMovementComponent::TickComponent(float deltaTime, ELevelTick tickType,
 			}
 		}
 	}
+
 	if(LeftTrack)
 	{
 		LeftTrack->AnimateTrack(PVehicle->mWheelsDynData.getWheelRotationSpeed(0) * deltaTime * Wheels[LeftSprocketWheelIndex]->ShapeRadius);
@@ -470,7 +471,7 @@ void UTankMovementComponent::UpdateSimulation(float DeltaTime)
 	rawInputData.setAnalogRightThrust(RightThrustInput);
 	rawInputData.setAnalogLeftBrake(BrakeLeftInput);
 	rawInputData.setAnalogRightBrake(BrakeRightInput);
-	
+
 	if (!GetUseAutoGears())
 	{
 		rawInputData.setGearUp(bRawGearUpInput);
@@ -606,8 +607,8 @@ void UTankMovementComponent::ClearInput()
 
 void UTankMovementComponent::Init(UTrackComponent * leftTrack, UTrackComponent * rightTrack)
 {
-//	checkf(leftTrack, TEXT("Failed to init MovementComponent. LeftTract == nullptr"));
-//	checkf(rightTrack, TEXT("Failed to init MovementComponent. RightTract == nullptr"));
+	checkf(leftTrack, TEXT("Failed to init MovementComponent. LeftTract == nullptr"));
+	checkf(rightTrack, TEXT("Failed to init MovementComponent. RightTract == nullptr"));
 
 	LeftTrack = leftTrack;
 	RightTrack = rightTrack;
@@ -652,6 +653,11 @@ void UTankMovementComponent::SetSteeringDirection(const FVector2D desiredSteerin
 			SetRightBrakeInput(RightBrakeSteeringAngleMappingCurve.GetRichCurveConst()->Eval(steeringAngle));
 		}
 	}
+}
+
+float UTankMovementComponent::GetThrottleInput() const
+{
+	return ThrottleInput;
 }
 
 #pragma endregion PUBLIC_INTERFACE

@@ -28,12 +28,12 @@ class UWOT_API UTrackComponent : public USplineComponent
 private:
 	UInstancedStaticMeshComponent * Mesh = nullptr;
 
-	float TreadLength = 0;
-	float TrackOffset = 0;
+	// Offset by percent of track length, use to roll track
+	float TrackOffsetPercentage = 0;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = TrackSetup)
-		 int TreadCount = 20;
+		 int TreadCount = 80;
 
 	/** Use this to offset track away from wheel surface */
 	UPROPERTY(EditDefaultsOnly, Category = TrackSetup)

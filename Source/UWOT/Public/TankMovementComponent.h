@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "UWOT.h"
 #include "WheeledVehicleMovementComponent.h"
 #include "WheeledVehicleMovementComponent4W.h"
 #include "TankMovementComponent.generated.h"
@@ -190,4 +190,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game|Components|TankMovement")
 		void SetSteeringDirection(FVector2D desiredSteeringDirection);
+
+	UFUNCTION(BlueprintCallable, Category = "Game|Components|TankMovement")
+		float GetThrottleInput() const;
 };

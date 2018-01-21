@@ -20,11 +20,11 @@ void UTrackComponent::BuildTrack(UInstancedStaticMeshComponent * newMesh)
 	{
 		Mesh = newMesh;
 		Mesh->ClearInstances();
-		TreadLength = GetSplineLength() / TreadCount;
+		const auto treadLength = GetSplineLength() / TreadCount;
 
 		for (auto i = 0; i < TreadCount; i++)
 		{
-			Mesh->AddInstance(GetTransformAtDistanceAlongSpline(TreadLength * i, ESplineCoordinateSpace::Local));
+			Mesh->AddInstance(GetTransformAtDistanceAlongSpline(treadLength * i, ESplineCoordinateSpace::Local));
 		}
 	}
 }
@@ -36,11 +36,9 @@ void UTrackComponent::AdjustSpline(const int wheelId, const FVector location, co
 		auto localWheelPos = GetComponentTransform().InverseTransformPosition(location);
 		localWheelPos.Y = 0;
 
-		UE_LOG(LogTemp, Warning, TEXT("Your message, %s"), *localWheelPos.ToString());
-
 		for (auto pointId : SplinePointBindings[wheelId].PointIds)
 		{
-			SetLocationAtSplinePoint(pointId, localWheelPos - (wheelRadius + TrackThicknessOffset) * GetUpVectorAtSplinePoint(pointId, ESplineCoordinateSpace::World), ESplineCoordinateSpace::Local);
+			SetLocationAtSplinePoint(pointId, localWheelPos - (wheelRadius + TrackThicknessOffset) * GetUpVectorAtSplinePoint(pointId, ESplineCoordinateSpace::Local), ESplineCoordinateSpace::Local);
 		}
 	}
 }
@@ -49,16 +47,22 @@ void UTrackComponent::AnimateTrack(const float deltaTrackOffset)
 {
 	if(Mesh)
 	{
-		TrackOffset = FMath::Fmod(TrackOffset - deltaTrackOffset, GetSplineLength());
-		if (TrackOffset < 0)
+		const auto trackLength = GetSplineLength();
+		const auto treadLength = GetSplineLength() / TreadCount;
+
+		const auto lastTrackOffset = TrackOffsetPercentage * trackLength;
+		auto trackOffset = FMath::Fmod(lastTrackOffset - deltaTrackOffset, trackLength);
+		if (trackOffset < 0)
 		{
-			TrackOffset = GetSplineLength() + TrackOffset;
+			trackOffset = trackLength + trackOffset;
 		}
 
 		for (auto i = 0; i < TreadCount; i++)
 		{
-			const auto offset = FMath::Fmod(TreadLength * i + TrackOffset, GetSplineLength());
+			const auto offset = FMath::Fmod(treadLength * i + trackOffset, trackLength);
 			Mesh->UpdateInstanceTransform(i, GetTransformAtDistanceAlongSpline(offset, ESplineCoordinateSpace::Local), false, i == TreadCount - 1, false);
 		}
+
+		TrackOffsetPercentage = trackOffset / trackLength;
 	}
 }

@@ -8,7 +8,10 @@
 #include "Kismet/GameplayStaticsTypes.h"
 #include "TankMainWeaponComponent.generated.h"
 
+class UAudioComponent;
+class USoundCue;
 class UStaticMeshComponent;
+
 class AProjectile;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FMainWeaponStateChangeDelegate, float, remainTime, float, reloadTime, bool, bTargetLockedOn);
@@ -21,9 +24,23 @@ class UWOT_API UTankMainWeaponComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+private:
+	bool bTurretRotateSfxPlaying = false;
+	bool bReloadCompleteSfxPlayed = false;
+	bool bBlueprintInitialized = false;
+
 protected:
+	UAudioComponent * TurretRotateAudioComponent;
 	UStaticMeshComponent * Turret = nullptr;
 	UStaticMeshComponent * Barrel = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
+		USoundCue * ReloadCompleteSFX;
+	/** Time in second that reload complete sound should be played before reload is actually completed */
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
+		float ReloadCompleteSFXPreStartOffsetSec = 1;
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
+		float TurretRotationSfxFadeOutTime = 1;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		FVector DesiredWorldAimingDirection = FVector::OneVector;
@@ -53,6 +70,7 @@ protected:
 		float AimingCompletedAngleTolerance = 0.03;
 
 public:
+
 	/** Current shell type's reload time. Readonly */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Main Gun Properties")
 		float ReloadTime = 3;
@@ -85,6 +103,9 @@ public:
 		void Init(UStaticMeshComponent * turret, UStaticMeshComponent * barrel);
 
 	UFUNCTION(BlueprintCallable)
+		void SetTurretRotateAudioComponent(UAudioComponent * turretAudio);
+
+	UFUNCTION(BlueprintCallable)
 		void AimGun(FVector const & targetLocation, const bool bDrawDebug = false);
 
 	UFUNCTION(BlueprintCallable)
@@ -92,6 +113,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void ChangeShellType(TSubclassOf<AProjectile> newShellType);
+
+	UFUNCTION(BlueprintCallable)
+		void Reload();
 
 	UFUNCTION(BlueprintCallable)
 		void TraceProjectilePath(FPredictProjectilePathResult & outResult) const;

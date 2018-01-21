@@ -9,6 +9,7 @@
 class UParticleSystem;
 class UProjectileMovementComponent;
 class URadialForceComponent;
+class USoundCue;
 
 UCLASS()
 class UWOT_API AProjectile : public AActor
@@ -25,7 +26,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components|Projectile Properties|FXs")
 		UParticleSystem * ImpactBlastVfx = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|FXs")
+		USoundCue * ImpactBlastSfx = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|FXs")
 		UParticleSystem * MuzzleBlastVfx = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|FXs")
+		USoundCue * MuzzleBlastSfx = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
 		int FullDamage = 1000;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
@@ -39,8 +44,6 @@ public:
 		float LifeTimeSec = 10;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
 		float RecoilImpulse = 10000000;
-	UPROPERTY(BlueprintReadOnly, Category = "Components|Projectile Properties|Meta")
-		AActor * ProjectileOwner = nullptr;
 
 protected:
 	void BeginPlay() override;
@@ -50,6 +53,7 @@ public:
 	// Sets default values for this actor's properties
 	AProjectile();
 
+	void Fire(AActor * owner);
 	float GetSpeed() const;
 	UParticleSystem * GetMuzzleBlastVfx() const;
 };

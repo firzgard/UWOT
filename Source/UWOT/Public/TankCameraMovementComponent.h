@@ -22,6 +22,7 @@ private:
 	float BaseFirstPersonFOV = 0;
 	bool bUpdateFirstPersonZoom = false;
 	bool bUpdateThirdPersonZoom = false;
+	bool bBlueprintInitialized = false;
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Components|Zoom Properties")

@@ -31,23 +31,26 @@ void UTankCameraMovementComponent::TickComponent(float DeltaTime, ELevelTick Tic
 
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if(bUpdateFirstPersonZoom)
+	if (bBlueprintInitialized)
 	{
-		FirstPersonCamera->FieldOfView = BaseFirstPersonFOV / FMath::FInterpTo(BaseFirstPersonFOV / FirstPersonCamera->FieldOfView, TargetFirstPersonZoomLevel, DeltaTime, ZoomSpeed);
-		if (FMath::IsNearlyEqual(TargetFirstPersonZoomLevel, BaseFirstPersonFOV / FirstPersonCamera->FieldOfView, TARGET_FIRST_PERSON_ZOOM_TOLERANCE))
+		if (bUpdateFirstPersonZoom)
 		{
-			FirstPersonCamera->FieldOfView = BaseFirstPersonFOV / TargetFirstPersonZoomLevel;
-			bUpdateFirstPersonZoom = false;
+			FirstPersonCamera->FieldOfView = BaseFirstPersonFOV / FMath::FInterpTo(BaseFirstPersonFOV / FirstPersonCamera->FieldOfView, TargetFirstPersonZoomLevel, DeltaTime, ZoomSpeed);
+			if (FMath::IsNearlyEqual(TargetFirstPersonZoomLevel, BaseFirstPersonFOV / FirstPersonCamera->FieldOfView, TARGET_FIRST_PERSON_ZOOM_TOLERANCE))
+			{
+				FirstPersonCamera->FieldOfView = BaseFirstPersonFOV / TargetFirstPersonZoomLevel;
+				bUpdateFirstPersonZoom = false;
+			}
 		}
-	}
 
-	if(bUpdateThirdPersonZoom)
-	{
-		ThirdPersonSpringArm->TargetArmLength = FMath::FInterpTo(ThirdPersonSpringArm->TargetArmLength, TargetThirdPersonZoomStep, DeltaTime, ZoomSpeed);
-		if (FMath::IsNearlyEqual(TargetThirdPersonZoomStep, ThirdPersonSpringArm->TargetArmLength, TARGET_THIRD_PERSON_ZOOM_TOLERANCE))
+		if (bUpdateThirdPersonZoom)
 		{
-			ThirdPersonSpringArm->TargetArmLength = TargetThirdPersonZoomStep;
-			bUpdateThirdPersonZoom = false;
+			ThirdPersonSpringArm->TargetArmLength = FMath::FInterpTo(ThirdPersonSpringArm->TargetArmLength, TargetThirdPersonZoomStep, DeltaTime, ZoomSpeed);
+			if (FMath::IsNearlyEqual(TargetThirdPersonZoomStep, ThirdPersonSpringArm->TargetArmLength, TARGET_THIRD_PERSON_ZOOM_TOLERANCE))
+			{
+				ThirdPersonSpringArm->TargetArmLength = TargetThirdPersonZoomStep;
+				bUpdateThirdPersonZoom = false;
+			}
 		}
 	}
 }
@@ -73,12 +76,13 @@ void UTankCameraMovementComponent::Init(UCameraComponent* newFirstPersonCamera
 	ThirdPersonSpringArm->TargetArmLength = TargetThirdPersonZoomStep = ThirdPersonZoomSteps[TargetThirdPersonZoomStepIndex];
 
 	bUpdateFirstPersonZoom = bUpdateThirdPersonZoom = false;
+	bBlueprintInitialized = true;
 }
 
 void UTankCameraMovementComponent::SetFirstPersonZoomLevel(int levelIndex)
 {
 	levelIndex = FMath::Clamp(levelIndex, 0, FirstPersonZoomLevels.Num() - 1);
-	if(levelIndex != TargetFirstPersonZoomLevelIndex)
+	if (levelIndex != TargetFirstPersonZoomLevelIndex)
 	{
 		bUpdateFirstPersonZoom = true;
 		TargetFirstPersonZoomLevelIndex = levelIndex;
@@ -89,7 +93,7 @@ void UTankCameraMovementComponent::SetFirstPersonZoomLevel(int levelIndex)
 void UTankCameraMovementComponent::SetThirdPersonZoomStep(int stepIndex)
 {
 	stepIndex = FMath::ClampAngle(stepIndex, 0, ThirdPersonZoomSteps.Num() - 1);
-	if(stepIndex != TargetThirdPersonZoomStepIndex)
+	if (stepIndex != TargetThirdPersonZoomStepIndex)
 	{
 		bUpdateThirdPersonZoom = true;
 		TargetThirdPersonZoomStepIndex = stepIndex;
@@ -99,32 +103,38 @@ void UTankCameraMovementComponent::SetThirdPersonZoomStep(int stepIndex)
 
 void UTankCameraMovementComponent::RotateCameraYaw(float deltaRotationDeg)
 {
-	const auto deltaRotator = FRotator(0, deltaRotationDeg, 0);
-	FirstPersonSpringArm->AddLocalRotation(deltaRotator);
-	ThirdPersonSpringArm->AddLocalRotation(deltaRotator);
+	if (bBlueprintInitialized)
+	{
+		const auto deltaRotator = FRotator(0, deltaRotationDeg, 0);
+		FirstPersonSpringArm->AddLocalRotation(deltaRotator);
+		ThirdPersonSpringArm->AddLocalRotation(deltaRotator);
+	}
 }
 
 void UTankCameraMovementComponent::RotateCameraPitch(float deltaRotationDeg)
 {
-	auto targetRotation = FirstPersonSpringArm->RelativeRotation;
-	targetRotation.Roll = 0;
-	targetRotation.Pitch = FMath::Clamp(targetRotation.Pitch + deltaRotationDeg, CameraPitchMinDeg, CameraPitchMaxDeg);
-	FirstPersonSpringArm->SetRelativeRotation(targetRotation);
-	ThirdPersonSpringArm->SetRelativeRotation(targetRotation);
+	if (bBlueprintInitialized)
+	{
+		auto targetRotation = FirstPersonSpringArm->RelativeRotation;
+		targetRotation.Roll = 0;
+		targetRotation.Pitch = FMath::Clamp(targetRotation.Pitch + deltaRotationDeg, CameraPitchMinDeg, CameraPitchMaxDeg);
+		FirstPersonSpringArm->SetRelativeRotation(targetRotation);
+		ThirdPersonSpringArm->SetRelativeRotation(targetRotation);
+	}
 }
 
 FVector UTankCameraMovementComponent::GetCameraForwardVector() const
 {
-	return FirstPersonCamera->GetForwardVector();
+	return bBlueprintInitialized ? FirstPersonCamera->GetForwardVector() : FVector::ForwardVector;
 }
 
 FVector UTankCameraMovementComponent::GetCameraRightVector() const
 {
-	return FirstPersonCamera->GetRightVector();
+	return bBlueprintInitialized ? FirstPersonCamera->GetRightVector() : FVector::ForwardVector;
 }
 
 FVector UTankCameraMovementComponent::GetCameraUpVector() const
 {
-	return FirstPersonCamera->GetUpVector();
+	return bBlueprintInitialized ? FirstPersonCamera->GetUpVector() : FVector::ForwardVector;
 }
 

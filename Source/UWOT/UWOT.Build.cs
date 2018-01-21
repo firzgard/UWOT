@@ -12,6 +12,7 @@ public class UWOT : ModuleRules
             , "CoreUObject"
             , "Engine"
             , "InputCore"
+		    , "Landscape"
             , "PhysX"
 		    , "APEX"
             , "PhysXVehicles"
