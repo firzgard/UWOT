@@ -88,16 +88,20 @@ void ATank::PostInitializeComponents()
 		TurretRotateAudioComponent->Stop();
 	}
 
-	if(FullThrottleRotateAudioComponent)
+	// Full throttle sfx only need to be played on player controlled tank
+	if(Cast<APlayerController>(Controller))
 	{
-		FullThrottleRotateAudioComponent->SetSound(EngineFullThrottleSFX);
-		FullThrottleRotateAudioComponent->Stop();
-	}
+		if (FullThrottleRotateAudioComponent)
+		{
+			FullThrottleRotateAudioComponent->SetSound(EngineFullThrottleSFX);
+			FullThrottleRotateAudioComponent->Stop();
+		}
 
-	if(TrackRollingAudioComponent)
-	{
-		TrackRollingAudioComponent->SetSound(TrackRollingSFX);
-		TrackRollingAudioComponent->Stop();
+		if (TrackRollingAudioComponent)
+		{
+			TrackRollingAudioComponent->SetSound(TrackRollingSFX);
+			TrackRollingAudioComponent->Stop();
+		}
 	}
 }
 
@@ -108,7 +112,7 @@ void ATank::BeginPlay()
 	DustParticleComponents.SetNum(MovementComponent->Wheels.Num());
 
 	// Ignite engine
-	if (EngineIgnitionSFX)
+	if (EngineIgnitionSFX && Cast<APlayerController>(Controller))
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, EngineIgnitionSFX, GetActorLocation(), GetActorRotation(), 1, 1, 0, nullptr, nullptr, this);
 
@@ -146,6 +150,7 @@ void ATank::Tick(float deltaTime)
 		FullThrottleRotateAudioComponent->Play();
 	}
 
+	// Set engine rpm param for sfx
 	if (Controller)
 	{
 		const auto playerId = Controller->GetUniqueID();
@@ -159,6 +164,16 @@ void ATank::Tick(float deltaTime)
 			UVehicleEngineSoundNode::SetDesiredRPM(playerId, desiredRpm);
 			EngineAudioComponent->SetFloatParameter(FName("RPM"), desiredRpm.DesiredRPM);
 		}
+	}
+
+	// Flag to reset highlight next frame
+	if(bHighlighting)
+	{
+		bHighlighting = false;
+	}
+	else
+	{
+		SetHighlight(bHighlighting);
 	}
 }
 
@@ -433,6 +448,16 @@ void ATank::UpdateWheelEffects()
 		}
 	}
 }
+
+
+
+void ATank::SetHighlight(bool bHighlight)
+{
+	bHighlighting = bHighlight;
+
+	ReceiveSetHighlight(bHighlight);
+}
+
 
 float ATank::GetHullAlignment() const
 {

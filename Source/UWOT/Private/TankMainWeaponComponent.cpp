@@ -40,8 +40,10 @@ void UTankMainWeaponComponent::TickComponent(float deltaTime, ELevelTick tickTyp
 			RemainReloadTime = FMath::Clamp<float>(RemainReloadTime - deltaTime, 0, ReloadTime);
 			bWeaponStateChanged = true;
 
+			
 			// Play reload gun before reload is about to complete
-			if(!bReloadCompleteSfxPlayed && ReloadCompleteSFX && ReloadCompleteSFXPreStartOffsetSec > RemainReloadTime)
+			// Only play on player controlled tank
+			if(Cast<APlayerController>(Cast<APawn>(GetOwner())->GetController()) && !bReloadCompleteSfxPlayed && ReloadCompleteSFX && ReloadCompleteSFXPreStartOffsetSec > RemainReloadTime)
 			{
 				UGameplayStatics::PlaySoundAtLocation(this, ReloadCompleteSFX, Turret->GetComponentLocation());
 				bReloadCompleteSfxPlayed = true;

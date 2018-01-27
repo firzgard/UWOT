@@ -27,6 +27,7 @@ private:
 	UPROPERTY(Transient)
 		TArray<UParticleSystemComponent *> DustParticleComponents;
 
+	bool bHighlighting = false;
 	bool bSkidding = false;
 	bool bOnAir = false;
 	bool bFullThrottleSfxPlayed = false;
@@ -157,6 +158,11 @@ protected:
 
 public:
 	ATank(const FObjectInitializer& objectInitializer);
+
+	UFUNCTION(BlueprintCallable)
+		void SetHighlight(bool bHighlight);
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetHighlight"))
+		void ReceiveSetHighlight(bool bHighlight);
 
 	UFUNCTION(BlueprintCallable)
 		float GetHullAlignment() const;

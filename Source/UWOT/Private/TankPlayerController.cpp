@@ -24,6 +24,13 @@ void ATankPlayerController::SetPawn(APawn* InPawn)
 	ReceiveSetTank(lastTank);
 }
 
+void ATankPlayerController::Tick(float deltaTime)
+{
+	Super::Tick(deltaTime);
+
+
+}
+
 
 void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector &OutTargetPosition) const
 {
@@ -33,10 +40,19 @@ void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLo
 	FHitResult OutHitresult;
 	auto lineTraceStartPos = CursorWorldLocation + CursorWorldDirection * LINE_TRACE_START_DISTANCE_FROM_CURSOR;
 	auto lineTraceEndPos = lineTraceStartPos + CursorWorldDirection * LineTraceRange;
-
+	
 	if (GetWorld()->LineTraceSingleByChannel(OutHitresult, lineTraceStartPos, lineTraceEndPos, ECollisionChannel::ECC_Camera))
 	{
 		OutTargetPosition = OutHitresult.Location;
+		
+		// If hit a tank, highlight it
+		if(OutHitresult.Actor.IsValid())
+		{
+			if (auto hitTank = Cast<ATank>(OutHitresult.Actor.Get()))
+			{
+				hitTank->SetHighlight(true);
+			}
+		}
 	}
 	else
 	{

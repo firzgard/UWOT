@@ -23,6 +23,7 @@ public:
 protected:
 	void BeginPlay() override;
 	void SetPawn(APawn* InPawn) override;
+	void Tick(float deltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
 		void GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector& OutTargetPosition) const;
