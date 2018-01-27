@@ -3,7 +3,14 @@ My implementation of Ben Tristem's tank game following his [UE4 course](https://
 
 ## Highlighted features:
 
-### 1. Camouflage:
+### 1. PhysX tank vehicle:
+
+#### Demo:
+[![Alt text](https://img.youtube.com/vi/D92JwmrB2vo/0.jpg)](https://youtu.be/D92JwmrB2vo)
+
+#### Description: Wait for it :3
+
+### 2. Camouflage:
 
 #### Demo:
 
