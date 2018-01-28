@@ -137,7 +137,6 @@ void ATank::Tick(float deltaTime)
 
 	// Play full-throttle sfx
 	const auto currentThrottle = MovementComponent->GetThrottleInput();
-	UE_LOG(LogTemp, Warning, TEXT("Your message %f"), currentThrottle);
 	if(currentThrottle == 0)
 	{
 		bFullThrottleSfxPlayed = false;

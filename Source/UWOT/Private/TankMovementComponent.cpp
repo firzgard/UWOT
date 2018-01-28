@@ -125,8 +125,7 @@
 		}
 
 		// if player isn't pressing forward or backwards
-		// and if speed is close to stop 
-		else if (rawThrottleInput == 0 && FMath::Abs(forwardSpeed) < autoStopThresholdSpeed)
+		else if (rawThrottleInput == 0)
 		{
 			rawBrakeInput = idleBrakeInput;
 		}
@@ -203,23 +202,10 @@ UTankMovementComponent::UTankMovementComponent(const FObjectInitializer& ObjectI
 		steeringCurveData->AddKey(60.f, 0.8f);
 		steeringCurveData->AddKey(120.f, 0.7f);
 
-		auto leftThrustSteeringMappingCurveData = LeftThrustSteeringAngleMappingCurve.GetRichCurve();
-		leftThrustSteeringMappingCurveData->AddKey(0, 1);
-		leftThrustSteeringMappingCurveData->AddKey(-90, -1);
-		leftThrustSteeringMappingCurveData->AddKey(90, 1);
-
-		auto rightThrustSteeringMappingCurveData = RightThrustSteeringAngleMappingCurve.GetRichCurve();
-		rightThrustSteeringMappingCurveData->AddKey(0, 1);
-		rightThrustSteeringMappingCurveData->AddKey(-90, 1);
-		rightThrustSteeringMappingCurveData->AddKey(90, -1);
-
-		auto leftBrakeSteeringMappingCurveData = LeftBrakeSteeringAngleMappingCurve.GetRichCurve();
-		leftBrakeSteeringMappingCurveData->AddKey(90, 0);
-		leftBrakeSteeringMappingCurveData->AddKey(-90, 0);
-
-		auto rightBrakeSteeringMappingCurveData = RightBrakeSteeringAngleMappingCurve.GetRichCurve();
-		rightBrakeSteeringMappingCurveData->AddKey(90, 0);
-		rightBrakeSteeringMappingCurveData->AddKey(-90, 0);
+		auto trackSpeedDifferentialSteeringAngleMappingCurveData = TrackSpeedDifferentialSteeringAngleMappingCurve.GetRichCurve();
+		trackSpeedDifferentialSteeringAngleMappingCurveData->AddKey(-90, -1);
+		trackSpeedDifferentialSteeringAngleMappingCurveData->AddKey(0, 1);
+		trackSpeedDifferentialSteeringAngleMappingCurveData->AddKey(90, -1);
 	}
 
 	// Initialize WheelSetups array with selected number of wheels
@@ -380,13 +366,13 @@ void UTankMovementComponent::UpdateTankState(float DeltaTime)
 					if (bReverseAsBrake)
 					{
 						//for reverse as state we want to automatically shift between reverse and first gear
-						if (FMath::Abs(GetForwardSpeed()) < WrongDirectionThreshold)	//we only shift between reverse and first if the car is slow enough. This isn't 100% correct since we really only care about engine speed, but good enough
+						if (GetForwardSpeed() < TurnInPlaceSpeedThreshold)	//we only shift between reverse and first if the car is slow enough. This isn't 100% correct since we really only care about engine speed, but good enough
 						{
-							if (RawThrottleInput < 0.f && GetCurrentGear() >= 0 && GetTargetGear() >= 0)
+							if (RawThrottleInput < 0.f && GetCurrentGear() >= 0)
 							{
 								SetTargetGear(-1, true);
 							}
-							else if (RawThrottleInput > 0.f && GetCurrentGear() <= 0 && GetTargetGear() <= 0)
+							else if (RawThrottleInput > 0.f && GetCurrentGear() <= 0)
 							{
 								SetTargetGear(1, true);
 							}
@@ -419,7 +405,14 @@ void UTankMovementComponent::UpdateTankState(float DeltaTime)
 
 void UTankMovementComponent::RequestDirectMove(const FVector& moveVelocity, bool bForceMaxSpeed)
 {
-	SetThrottleInput(GetOwner()->GetActorForwardVector() | moveVelocity);
+	if((GetOwner()->GetActorForwardVector() | moveVelocity) >= 0)
+	{
+		SetThrottleInput(1);
+	} else
+	{
+		SetThrottleInput(-1);
+	}
+	
 	SetSteeringDirection(FVector2D(moveVelocity.GetSafeNormal()));
 }
 
@@ -642,16 +635,94 @@ void UTankMovementComponent::SetSteeringDirection(const FVector2D desiredSteerin
 	{
 		const auto steeringAngle = FMath::RadiansToDegrees(FMath::Asin(desiredSteeringDirection.GetSafeNormal().Y));
 
-		SetLeftThrustInput(LeftThrustSteeringAngleMappingCurve.GetRichCurveConst()->Eval(steeringAngle));
-		SetRightThrustInput(RightThrustSteeringAngleMappingCurve.GetRichCurveConst()->Eval(steeringAngle));
-		if(RawBrakeLeftInput == 0)
+		auto const leftTrackRotationSpeed = PVehicle->mWheelsDynData.getWheelRotationSpeed(LeftSprocketWheelIndex);
+		auto const rightTrackRotationSpeed = PVehicle->mWheelsDynData.getWheelRotationSpeed(RightSprocketWheelIndex);
+
+		auto const desiredTrackRotationSpeedDifference = FMath::Clamp(TrackSpeedDifferentialSteeringAngleMappingCurve.GetRichCurveConst()->Eval(steeringAngle), -1.0f, 1.0f);
+
+		// Steering to right
+		if(steeringAngle > 0)
 		{
-			SetLeftBrakeInput(LeftBrakeSteeringAngleMappingCurve.GetRichCurveConst()->Eval(steeringAngle));
+			if(leftTrackRotationSpeed == 0)
+			{
+				RawLeftThrustInput = 1;
+				RawRightThrustInput = 1;
+			}
+			else
+			{
+				const auto rightTrackRotationSpeedDifference =  rightTrackRotationSpeed / leftTrackRotationSpeed;
+
+				// Increase/reduce tracks' speed to archieve desired differential
+				if (desiredTrackRotationSpeedDifference < rightTrackRotationSpeedDifference)
+				{
+					RawLeftThrustInput = 1;
+					RawRightThrustInput = -1;
+				}
+
+				// If already achieved desired differential, stop giving right track thrust
+				else
+				{
+					RawLeftThrustInput = 1;
+					RawRightThrustInput = desiredTrackRotationSpeedDifference;
+				}
+			}
 		}
-		if(RawBrakeRightInput == 0)
+
+		// Steering to left
+		else if (steeringAngle < 0)
 		{
-			SetRightBrakeInput(RightBrakeSteeringAngleMappingCurve.GetRichCurveConst()->Eval(steeringAngle));
+			if (rightTrackRotationSpeed == 0)
+			{
+				RawLeftThrustInput = 1;
+				RawRightThrustInput = 1;
+			}
+			else
+			{
+				const auto leftTrackRotationSpeedDifference = leftTrackRotationSpeed / rightTrackRotationSpeed;
+				// Increase/reduce tracks' speed to archieve desired differential
+				if (desiredTrackRotationSpeedDifference < leftTrackRotationSpeedDifference)
+				{
+					RawLeftThrustInput = -1;
+					RawRightThrustInput = 1;
+				}
+				else
+				{
+					RawLeftThrustInput = desiredTrackRotationSpeedDifference;
+					RawRightThrustInput = 1;
+				}
+			}
 		}
+
+		// No steering
+		else
+		{
+			// Stabilize track speed differencial
+			// Increase/reduce tracks' speed to archieve equal rotation speed between 2 track
+			{
+				// TODO: Should we expose these magic numbers to editor?
+				static const auto HORIZONTAL_VEL_TOLERANCE = 20.0f;
+				static const auto ADJUSTMENT_THRUST = 0.2f;
+
+				const auto relativeVelocity = GetOwner()->GetTransform().InverseTransformVectorNoScale(GetOwner()->GetVelocity());
+
+				if (FMath::IsNearlyZero(relativeVelocity.Y, HORIZONTAL_VEL_TOLERANCE))
+				{
+					RawLeftThrustInput = 1;
+					RawRightThrustInput = 1;
+				}
+				else if (relativeVelocity.Y > 0)
+				{
+					RawLeftThrustInput = 1;
+					RawRightThrustInput = ADJUSTMENT_THRUST;
+				}
+				else
+				{
+					RawLeftThrustInput = ADJUSTMENT_THRUST;
+					RawRightThrustInput = 1;
+				}
+			}
+		}
+
 	}
 }
 

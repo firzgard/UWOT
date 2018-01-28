@@ -112,30 +112,16 @@ public:
 	/** Maximum steering versus forward speed (km/h) */
 	UPROPERTY(EditAnywhere, Category = SteeringSetup)
 		FRuntimeFloatCurve SteeringCurve;
-
-	/* Left thrust input mapped with steering angle.
-	 * Thrust input is within -1..1
-	 * Steering angle is within -90..90, clockwise */
+	/** Speed at which steering is considered turning in-place (cm/s) */
 	UPROPERTY(EditAnywhere, Category = SteeringSetup)
-		FRuntimeFloatCurve LeftThrustSteeringAngleMappingCurve;
+		float TurnInPlaceSpeedThreshold = 1500;
 
-	/* Right thrust input mapped with steering angle.
-	* Thrust input is within -1..1
-	* Steering angle is within -90..90, clockwise */
+	/* Stearing is accomplice by slowing down track on the turning side
+	* This curve determine the difference (In percent) between slow-down track's and forward track's rotation speed at certain steering angle.
+	* Steering angle is within -90..90, clockwise
+	* Difference value is between -1..1 */
 	UPROPERTY(EditAnywhere, Category = SteeringSetup)
-		FRuntimeFloatCurve RightThrustSteeringAngleMappingCurve;
-
-	/* Left brake input mapped with steering angle.
-	* Thrust input is within 0..1
-	* Steering angle is within -90..90, clockwise */
-	UPROPERTY(EditAnywhere, Category = SteeringSetup)
-		FRuntimeFloatCurve LeftBrakeSteeringAngleMappingCurve;
-
-	/* Right brake input mapped with steering angle.
-	* Thrust input is within 0..1
-	* Steering angle is within -90..90, clockwise */
-	UPROPERTY(EditAnywhere, Category = SteeringSetup)
-		FRuntimeFloatCurve RightBrakeSteeringAngleMappingCurve;
+		FRuntimeFloatCurve TrackSpeedDifferentialSteeringAngleMappingCurve;
 
 private:
 	/** Read current state for simulation */
