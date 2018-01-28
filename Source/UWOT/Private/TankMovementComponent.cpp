@@ -405,15 +405,10 @@ void UTankMovementComponent::UpdateTankState(float DeltaTime)
 
 void UTankMovementComponent::RequestDirectMove(const FVector& moveVelocity, bool bForceMaxSpeed)
 {
-	if((GetOwner()->GetActorForwardVector() | moveVelocity) >= 0)
-	{
-		SetThrottleInput(1);
-	} else
-	{
-		SetThrottleInput(-1);
-	}
-	
-	SetSteeringDirection(FVector2D(moveVelocity.GetSafeNormal()));
+	auto const bForward = (GetOwner()->GetActorForwardVector() | moveVelocity) >= 0;
+	SetThrottleInput(bForward ? 1 : -1);
+	SetTargetGear(bForward ? TransmissionSetup.ForwardGears.Num() : -1, false);
+	SetSteeringDirection(FVector2D(GetOwner()->GetTransform().InverseTransformVector(moveVelocity.GetSafeNormal())));
 }
 
 void UTankMovementComponent::SetupVehicle()

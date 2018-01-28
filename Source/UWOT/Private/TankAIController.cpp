@@ -37,10 +37,11 @@ void ATankAIController::Tick(float deltaTime)
 	{
 		ControlledTank->MainWeaponComponent->AimGun(player->GetActorLocation(), bDrawAimingDebugLine);
 
-		auto towardPlayerVector = player->GetActorLocation() - ControlledTank->GetActorLocation();
+		auto const towardPlayerVector = player->GetActorLocation() - ControlledTank->GetActorLocation();
+		auto const bIsAhead = (towardPlayerVector | ControlledTank->GetActorForwardVector()) > 0;
 
-		// Move toward player if distance-to-player is bigger than AcceptanceDistance
-		if (towardPlayerVector.SizeSquared() > AcceptanceDistance * AcceptanceDistance)
+		// Move toward player if distance-to-player is bigger than AcceptanceDistance and is in front of controlled tank
+		if (towardPlayerVector.SizeSquared() > AcceptanceDistance * AcceptanceDistance && bIsAhead)
 		{
 			MoveToActor(player, AcceptanceDistance, true, false);
 		}
@@ -49,26 +50,18 @@ void ATankAIController::Tick(float deltaTime)
 			// Rotate toward the best angled position
 			// There will be 2 such position, one on the left and other on the right
 			// Choose the position that player is facing toward, in advance of them moving forward
-			auto bestAngle = (player->GetActorForwardVector() | GetActorRightVector()) > 0 ? BestAngleDeg : -BestAngleDeg;
+			const auto bestAngle = (player->GetActorForwardVector() | ControlledTank->GetActorRightVector()) > 0 ? BestAngleDeg : -BestAngleDeg;
 
-			auto bestAngleDirection = towardPlayerVector.RotateAngleAxis(bestAngle, GetActorUpVector()).GetSafeNormal();
-			auto rotateRightThrottle = bestAngleDirection | GetActorRightVector();
+			const auto bestAngleDirection = towardPlayerVector.RotateAngleAxis(bestAngle, ControlledTank->GetActorUpVector()).GetSafeNormal();
+			const auto rotateRightThrust = bestAngleDirection | ControlledTank->GetActorRightVector();
 
-			if(FMath::Abs(rotateRightThrottle) > FMath::Sin(FMath::DegreesToRadians(BestAngleToleranceDeg)))
+			if(FMath::Abs(rotateRightThrust) > FMath::Sin(FMath::DegreesToRadians(BestAngleToleranceDeg)))
 			{
 				ControlledTank->MovementComponent->SetTargetGear(1, false);
 				ControlledTank->MovementComponent->SetThrottleInput(1);
 
-				if (rotateRightThrottle > 0)
-				{
-					ControlledTank->MovementComponent->SetLeftThrustInput(1);
-					ControlledTank->MovementComponent->SetRightThrustInput(-1);
-				}
-				else if (rotateRightThrottle < 0)
-				{
-					ControlledTank->MovementComponent->SetLeftThrustInput(-1);
-					ControlledTank->MovementComponent->SetRightThrustInput(1);
-				}
+				ControlledTank->MovementComponent->SetLeftThrustInput(rotateRightThrust);
+				ControlledTank->MovementComponent->SetRightThrustInput(-rotateRightThrust);
 			}
 		}
 		
