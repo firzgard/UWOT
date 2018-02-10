@@ -648,17 +648,31 @@ void UTankMovementComponent::SetSteeringDirection(const FVector2D desiredSteerin
 				const auto rightTrackRotationSpeedDifference =  rightTrackRotationSpeed / leftTrackRotationSpeed;
 
 				// Increase/reduce tracks' speed to archieve desired differential
-				if (desiredTrackRotationSpeedDifference < rightTrackRotationSpeedDifference)
+				if (desiredTrackRotationSpeedDifference > 0)
 				{
-					RawLeftThrustInput = 1;
-					RawRightThrustInput = -1;
+					if (desiredTrackRotationSpeedDifference < rightTrackRotationSpeedDifference)
+					{
+						RawLeftThrustInput = 1;
+						RawBrakeRightInput = -1;
+					}
+					else
+					{
+						RawLeftThrustInput = 1;
+						RawRightThrustInput = desiredTrackRotationSpeedDifference;
+					}
 				}
-
-				// If already achieved desired differential, stop giving right track thrust
 				else
 				{
-					RawLeftThrustInput = 1;
-					RawRightThrustInput = desiredTrackRotationSpeedDifference;
+					if (desiredTrackRotationSpeedDifference < rightTrackRotationSpeedDifference)
+					{
+						RawLeftThrustInput = 1;
+						RawRightThrustInput = -1;
+					}
+					else
+					{
+						RawLeftThrustInput = 1;
+						RawRightThrustInput = desiredTrackRotationSpeedDifference;
+					}
 				}
 			}
 		}
@@ -675,15 +689,31 @@ void UTankMovementComponent::SetSteeringDirection(const FVector2D desiredSteerin
 			{
 				const auto leftTrackRotationSpeedDifference = leftTrackRotationSpeed / rightTrackRotationSpeed;
 				// Increase/reduce tracks' speed to archieve desired differential
-				if (desiredTrackRotationSpeedDifference < leftTrackRotationSpeedDifference)
+				if(desiredTrackRotationSpeedDifference > 0)
 				{
-					RawLeftThrustInput = -1;
-					RawRightThrustInput = 1;
+					if (desiredTrackRotationSpeedDifference < leftTrackRotationSpeedDifference)
+					{
+						RawBrakeLeftInput = -1;
+						RawRightThrustInput = 1;
+					}
+					else
+					{
+						RawLeftThrustInput = desiredTrackRotationSpeedDifference;
+						RawRightThrustInput = 1;
+					}
 				}
 				else
 				{
-					RawLeftThrustInput = desiredTrackRotationSpeedDifference;
-					RawRightThrustInput = 1;
+					if (desiredTrackRotationSpeedDifference < leftTrackRotationSpeedDifference)
+					{
+						RawLeftThrustInput = -1;
+						RawRightThrustInput = 1;
+					}
+					else
+					{
+						RawLeftThrustInput = desiredTrackRotationSpeedDifference;
+						RawRightThrustInput = 1;
+					}
 				}
 			}
 		}
@@ -695,8 +725,7 @@ void UTankMovementComponent::SetSteeringDirection(const FVector2D desiredSteerin
 			// Increase/reduce tracks' speed to archieve equal rotation speed between 2 track
 			{
 				// TODO: Should we expose these magic numbers to editor?
-				static const auto HORIZONTAL_VEL_TOLERANCE = 20.0f;
-				static const auto ADJUSTMENT_THRUST = 0.2f;
+				static const auto HORIZONTAL_VEL_TOLERANCE = 30.0f;
 
 				const auto relativeVelocity = GetOwner()->GetTransform().InverseTransformVectorNoScale(GetOwner()->GetVelocity());
 
@@ -708,11 +737,11 @@ void UTankMovementComponent::SetSteeringDirection(const FVector2D desiredSteerin
 				else if (relativeVelocity.Y > 0)
 				{
 					RawLeftThrustInput = 1;
-					RawRightThrustInput = ADJUSTMENT_THRUST;
+					RawRightThrustInput = 0;
 				}
 				else
 				{
-					RawLeftThrustInput = ADJUSTMENT_THRUST;
+					RawRightThrustInput = 0;
 					RawRightThrustInput = 1;
 				}
 			}

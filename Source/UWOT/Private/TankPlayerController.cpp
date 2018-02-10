@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStaticsTypes.h"
 
 #include "TankMainWeaponComponent.h"
+#include "TankSpottingComponent.h"
 
 void ATankPlayerController::BeginPlay()
 {
@@ -20,7 +21,23 @@ void ATankPlayerController::SetPawn(APawn* InPawn)
 
 	const auto tank = Cast<ATank>(InPawn);
 	const auto lastTank = ControlledTank;
-	ControlledTank = tank;
+
+	if (tank != ControlledTank)
+	{
+		// Reset last possessed tank
+		if (ControlledTank)
+		{
+			ControlledTank->SpottingComponent->TeamId = ETankTeamEnum::NONE;
+		}
+
+		ControlledTank = tank;
+
+		if (ControlledTank)
+		{
+			ControlledTank->SpottingComponent->TeamId = TeamId;
+		}
+	}
+
 	ReceiveSetTank(lastTank);
 }
 
@@ -37,18 +54,24 @@ void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLo
 	// Safe-guard in case the cursor's camera clip through a wall behind or something.
 	float const LINE_TRACE_START_DISTANCE_FROM_CURSOR = 500;
 
-	FHitResult OutHitresult;
-	auto lineTraceStartPos = CursorWorldLocation + CursorWorldDirection * LINE_TRACE_START_DISTANCE_FROM_CURSOR;
-	auto lineTraceEndPos = lineTraceStartPos + CursorWorldDirection * LineTraceRange;
-	
-	if (GetWorld()->LineTraceSingleByChannel(OutHitresult, lineTraceStartPos, lineTraceEndPos, ECollisionChannel::ECC_Camera))
+	FHitResult outHitresult;
+	const auto lineTraceStartPos = CursorWorldLocation + CursorWorldDirection * LINE_TRACE_START_DISTANCE_FROM_CURSOR;
+	const auto lineTraceEndPos = lineTraceStartPos + CursorWorldDirection * LineTraceRange;
+
+	auto collisionQueryParams = FCollisionQueryParams();
+	if(ControlledTank)
 	{
-		OutTargetPosition = OutHitresult.Location;
+		collisionQueryParams.AddIgnoredActor(ControlledTank);
+	}
+	
+	if (GetWorld()->LineTraceSingleByChannel(outHitresult, lineTraceStartPos, lineTraceEndPos, ECollisionChannel::ECC_Camera, collisionQueryParams))
+	{
+		OutTargetPosition = outHitresult.Location;
 		
 		// If hit a tank, highlight it
-		if(OutHitresult.Actor.IsValid())
+		if(outHitresult.Actor.IsValid())
 		{
-			if (auto hitTank = Cast<ATank>(OutHitresult.Actor.Get()))
+			if (auto hitTank = Cast<ATank>(outHitresult.Actor.Get()))
 			{
 				hitTank->SetHighlight(true);
 			}
@@ -58,5 +81,26 @@ void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLo
 	{
 		OutTargetPosition = lineTraceEndPos;
 	}
+}
+
+bool ATankPlayerController::OnSpottedSelf_Implementation(bool bSpotted)
+{
+	ReceiveOnSpottedSeft(bSpotted);
+	return true;
+}
+
+bool ATankPlayerController::OnSpottedOther_Implementation(bool bSpotted, ATank * other)
+{
+	return true;
+}
+
+ETankTeamEnum ATankPlayerController::GetTeamId()
+{
+	return TeamId;
+}
+
+ATank* ATankPlayerController::GetControlledTank()
+{
+	return ControlledTank;
 }
 

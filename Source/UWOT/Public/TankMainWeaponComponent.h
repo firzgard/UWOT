@@ -25,6 +25,7 @@ class UWOT_API UTankMainWeaponComponent : public UActorComponent
 	GENERATED_BODY()
 
 private:
+	TArray<AActor *> RaycastActorToIgnore;
 	bool bTurretRotateSfxPlaying = false;
 	bool bReloadCompleteSfxPlayed = false;
 	bool bBlueprintInitialized = false;

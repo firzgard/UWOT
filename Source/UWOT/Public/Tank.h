@@ -12,6 +12,7 @@ class UVehicleDustType;
 class UTankCameraMovementComponent;
 class UTankMainWeaponComponent;
 class UTankMovementComponent;
+class UTankSpottingComponent;
 
 class UAudioComponent;
 class UCameraShake;
@@ -35,6 +36,10 @@ private:
 	float SkidStartTime = 0;
 
 protected:
+	/** The point where AI should aim at */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AI)
+		USceneComponent * AITarget;
+
 	UPROPERTY(VisibleAnywhere, Category = Components)
 		UAudioComponent* EngineAudioComponent;
 	UPROPERTY(VisibleAnywhere, Category = Components)
@@ -118,10 +123,14 @@ public:
 		UTankMovementComponent * MovementComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UCamouflageComponent * CamouflageComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		UTankSpottingComponent * SpottingComponent;
 
 	/** Identifies if pawn is in its dying state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health, ReplicatedUsing = OnReplicate_Dying)
 		bool bIsDying = false;
+
+private:
 
 protected:
 	// Begin Actor overrides
@@ -157,8 +166,10 @@ protected:
 	void UpdateWheelEffects();
 
 public:
-	ATank(const FObjectInitializer& objectInitializer);
+	ATank();
 
+	UFUNCTION(BlueprintCallable)
+		FVector GetAiTargetLocation() const;
 	UFUNCTION(BlueprintCallable)
 		void SetHighlight(bool bHighlight);
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetHighlight"))
@@ -168,4 +179,7 @@ public:
 		float GetHullAlignment() const;
 	UFUNCTION(BlueprintCallable)
 		float GetTurretAlignment() const;
+
+	UFUNCTION(BlueprintCallable)
+		bool TryFireGun();
 };

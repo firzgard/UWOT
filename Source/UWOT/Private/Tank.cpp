@@ -7,6 +7,7 @@
 #include "TankCameraMovementComponent.h"
 #include "TankMainWeaponComponent.h"
 #include "TankMovementComponent.h"
+#include "TankSpottingComponent.h"
 #include "VehicleEngineSoundNode.h"
 #include "VehicleImpactEffect.h"
 
@@ -23,7 +24,7 @@
 #include "UnrealNetwork.h"
 
 // Sets default values
-ATank::ATank(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
+ATank::ATank() : Super()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -38,7 +39,9 @@ ATank::ATank(const FObjectInitializer& objectInitializer) : Super(objectInitiali
 	RootComponent = ChassisMesh;
 	
 	CameraMovementComponent = CreateDefaultSubobject<UTankCameraMovementComponent>(FName("TankCameraMovementComponent"));
+
 	MainWeaponComponent = CreateDefaultSubobject<UTankMainWeaponComponent>(FName("TankMainWeaponComponent"));
+	SpottingComponent = CreateDefaultSubobject<UTankSpottingComponent>(FName("TankSpottingComponent"));
 	CamouflageComponent = CreateDefaultSubobject<UCamouflageComponent>(FName("TankCamouflageComponent"));
 
 	MovementComponent = CreateDefaultSubobject<UTankMovementComponent>(FName("TankMovementComponent"));
@@ -64,6 +67,9 @@ ATank::ATank(const FObjectInitializer& objectInitializer) : Super(objectInitiali
 	TurretRotateAudioComponent->bAutoActivate = false;
 	TurretRotateAudioComponent->SetupAttachment(ChassisMesh);
 	MainWeaponComponent->SetTurretRotateAudioComponent(TurretRotateAudioComponent);
+
+	AITarget = CreateDefaultSubobject<USceneComponent>(TEXT("AITarget"));
+	AITarget->SetupAttachment(ChassisMesh);
 }
 
 void ATank::PostInitializeComponents()
@@ -103,6 +109,8 @@ void ATank::PostInitializeComponents()
 			TrackRollingAudioComponent->Stop();
 		}
 	}
+
+	CamouflageComponent->OnChangeCamouflage.AddDynamic(SpottingComponent, &UTankSpottingComponent::SetInvisibleModeFactor);
 }
 
 void ATank::BeginPlay()
@@ -335,7 +343,6 @@ void ATank::OnDeath()
 	SetLifeSpan(0.2f);
 }
 
-
 void ATank::UpdateWheelEffects()
 {
 	const auto bOnAirLastFrame = bOnAir;
@@ -450,6 +457,12 @@ void ATank::UpdateWheelEffects()
 
 
 
+
+FVector ATank::GetAiTargetLocation() const
+{
+	return AITarget->GetComponentLocation();
+}
+
 void ATank::SetHighlight(bool bHighlight)
 {
 	bHighlighting = bHighlight;
@@ -470,4 +483,16 @@ float ATank::GetTurretAlignment() const
 	const auto turretYawVector = FVector::VectorPlaneProject(MainWeaponComponent->GetTurretForwardVector(), CameraMovementComponent->GetCameraUpVector()).GetSafeNormal();
 	auto angle = FMath::RadiansToDegrees(FMath::Acos(turretYawVector | CameraMovementComponent->GetCameraForwardVector()));
 	return (turretYawVector | CameraMovementComponent->GetCameraRightVector()) > 0 ? angle : -angle;
+}
+
+bool ATank::TryFireGun()
+{
+	if(MainWeaponComponent->TryFireGun())
+	{
+		SpottingComponent->bHasFired = true;
+		CamouflageComponent->DepletAll();
+		return true;
+	}
+
+	return false;
 }

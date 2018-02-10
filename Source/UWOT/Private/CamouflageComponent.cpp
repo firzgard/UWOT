@@ -18,7 +18,7 @@ void UCamouflageComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CamouflageRemainDuration = CamouflageDuration;
-	OnChangeCamouflage.Broadcast(CamouflageVisibility);
+	OnChangeCamouflage.Broadcast(CamouflageFactor);
 }
 
 
@@ -47,14 +47,14 @@ void UCamouflageComponent::TickComponent(float deltaTime, ELevelTick tickType, F
 	}
 
 	// Change camouflage ammout if visibility is not corresponding with camouflage stage
-	if ((bCamouflage && CamouflageVisibility != 0)
-		|| (!bCamouflage && CamouflageVisibility != 1))
+	if ((bCamouflage && CamouflageFactor != 1)
+		|| (!bCamouflage && CamouflageFactor != 0))
 	{
-		CamouflageVisibility += deltaTime / (bCamouflage ? -EnCamouflageTime : DeCamouflageTime);
-		CamouflageVisibility = FMath::Clamp<float>(CamouflageVisibility, 0, 1);
+		CamouflageFactor += deltaTime / (bCamouflage ? EnCamouflageTime : -DeCamouflageTime);
+		CamouflageFactor = FMath::Clamp<float>(CamouflageFactor, 0, 1);
 
 		// Call the blueprint anim event
-		OnChangeCamouflage.Broadcast(CamouflageVisibility);
+		OnChangeCamouflage.Broadcast(CamouflageFactor);
 	}
 }
 
@@ -68,4 +68,10 @@ bool UCamouflageComponent::TrySetCamouflage(bool bEnable)
 	}
 
 	return false;
+}
+
+void UCamouflageComponent::DepletAll()
+{
+	bCamouflage = false;
+	CamouflageRemainDuration = 0;
 }

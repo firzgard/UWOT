@@ -23,6 +23,8 @@ UTankMainWeaponComponent::UTankMainWeaponComponent()
 void UTankMainWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	RaycastActorToIgnore.Add(GetOwner());
 }
 
 
@@ -157,7 +159,7 @@ void UTankMainWeaponComponent::AimGun(const FVector & targetLocation, const bool
 			, ProjectileSpeed
 			, false, 0, 0, ESuggestProjVelocityTraceOption::DoNotTrace
 			, FCollisionResponseParams::DefaultResponseParam
-			, TArray<AActor *>()
+			, RaycastActorToIgnore
 			, bDrawDebug))
 		{
 			DesiredWorldAimingDirection = targetLocation - Barrel->GetComponentLocation();
@@ -222,7 +224,8 @@ void UTankMainWeaponComponent::TraceProjectilePath(FPredictProjectilePathResult 
 			, Barrel->GetComponentLocation() + Barrel->GetForwardVector() * FiringPositionOffset
 			, Barrel->GetForwardVector() * ProjectileSpeed
 			, ProjectileLifeTimeSec
-			, ECC_WorldDynamic), outResult);
+			, ECC_WorldDynamic
+			, GetOwner()), outResult);
 	}
 }
 
