@@ -55,6 +55,7 @@ void ATankSpottingManager::Tick(const float deltaTime)
 			}
 
 			// Invoke despotting
+			auto despottedEntries = TArray<ETankTeamEnum>();
 			for (auto & deSpottingEntry : memberEntry.Value.DeSpottingTimeStampDict)
 			{
 				if (timeSec > deSpottingEntry.Value)
@@ -68,9 +69,14 @@ void ATankSpottingManager::Tick(const float deltaTime)
 						otherTeamMember.Key->OnSpottedOther(memberEntry.Key, false);
 					}
 					
-					// Remove despotted entry
-					memberEntry.Value.DeSpottingTimeStampDict.Remove(deSpottingEntry.Key);
+					despottedEntries.Add(deSpottingEntry.Key);
 				}
+			}
+
+			// Remove despotted entry
+			for (const auto key : despottedEntries)
+			{
+				memberEntry.Value.DeSpottingTimeStampDict.Remove(key);
 			}
 		}
 	}

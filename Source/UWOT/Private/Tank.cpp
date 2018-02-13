@@ -111,6 +111,7 @@ void ATank::PostInitializeComponents()
 	}
 
 	CamouflageComponent->OnChangeCamouflage.AddDynamic(SpottingComponent, &UTankSpottingComponent::SetInvisibleModeFactor);
+	RemainingHitpoint = Hitpoint;
 }
 
 void ATank::BeginPlay()
@@ -239,11 +240,99 @@ void ATank::SetupPlayerInputComponent(UInputComponent* playerInputComponent)
 	Super::SetupPlayerInputComponent(playerInputComponent);
 }
 
+/* Merge APawn's and AActor's */
 float ATank::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	// Die();
+	if (!ShouldTakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser))
+	{
+		return 0.f;
+	}
 
-	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	float ActualDamage = Damage;
+
+	UDamageType const* const DamageTypeCDO = DamageEvent.DamageTypeClass ? DamageEvent.DamageTypeClass->GetDefaultObject<UDamageType>() : GetDefault<UDamageType>();
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	{
+		// point damage event, pass off to helper function
+		FPointDamageEvent* const PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
+		ActualDamage = InternalTakePointDamage(ActualDamage, *PointDamageEvent, EventInstigator, DamageCauser);
+
+		RemainingHitpoint -= ActualDamage;
+
+		if (CamouflageComponent && CamouflageComponent->GetCamouflageFactor() > 0)
+		{
+			CamouflageComponent->Deplet(GetHitCamouflageDurationPenalty);
+		}
+
+		// K2 notification for this actor
+		if (ActualDamage != 0.f)
+		{
+			ReceivePointDamage(ActualDamage, DamageTypeCDO, PointDamageEvent->HitInfo.ImpactPoint, PointDamageEvent->HitInfo.ImpactNormal, PointDamageEvent->HitInfo.Component.Get(), PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection, EventInstigator, DamageCauser, PointDamageEvent->HitInfo);
+			OnTakePointDamage.Broadcast(this, ActualDamage, EventInstigator, PointDamageEvent->HitInfo.ImpactPoint, PointDamageEvent->HitInfo.Component.Get(), PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection, DamageTypeCDO, DamageCauser);
+
+			// Notify the component
+			UPrimitiveComponent* const PrimComp = PointDamageEvent->HitInfo.Component.Get();
+			if (PrimComp)
+			{
+				PrimComp->ReceiveComponentDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+			}
+		}
+	}
+	else if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+	{
+		// radial damage event, pass off to helper function
+		FRadialDamageEvent* const RadialDamageEvent = (FRadialDamageEvent*)&DamageEvent;
+		ActualDamage = InternalTakeRadialDamage(ActualDamage, *RadialDamageEvent, EventInstigator, DamageCauser);
+
+		RemainingHitpoint -= ActualDamage;
+
+		if (CamouflageComponent && CamouflageComponent->GetCamouflageFactor() > 0)
+		{
+			CamouflageComponent->Deplet(GetHitCamouflageDurationPenalty);
+		}
+
+		// K2 notification for this actor
+		if (ActualDamage != 0.f)
+		{
+			FHitResult const& Hit = (RadialDamageEvent->ComponentHits.Num() > 0) ? RadialDamageEvent->ComponentHits[0] : FHitResult();
+			ReceiveRadialDamage(ActualDamage, DamageTypeCDO, RadialDamageEvent->Origin, Hit, EventInstigator, DamageCauser);
+
+			// add any desired physics impulses to our components
+			for (int HitIdx = 0; HitIdx < RadialDamageEvent->ComponentHits.Num(); ++HitIdx)
+			{
+				FHitResult const& CompHit = RadialDamageEvent->ComponentHits[HitIdx];
+				UPrimitiveComponent* const PrimComp = CompHit.Component.Get();
+				if (PrimComp && PrimComp->GetOwner() == this)
+				{
+					PrimComp->ReceiveComponentDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+				}
+			}
+		}
+	}
+
+	// generic damage notifications sent for any damage
+	// note we will broadcast these for negative damage as well
+	if (ActualDamage != 0.f)
+	{
+		ReceiveAnyDamage(ActualDamage, DamageTypeCDO, EventInstigator, DamageCauser);
+		OnTakeAnyDamage.Broadcast(this, ActualDamage, DamageTypeCDO, EventInstigator, DamageCauser);
+		if (EventInstigator != NULL)
+		{
+			EventInstigator->InstigatedAnyDamage(ActualDamage, DamageTypeCDO, this, DamageCauser);
+		}
+	}
+
+	if (const auto controller = GetController())
+	{
+		controller->TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	}
+
+	if (RemainingHitpoint <= 0)
+	{
+		Die();
+	}
+
+	return ActualDamage;
 }
 
 void ATank::TornOff()
@@ -289,7 +378,8 @@ void ATank::UnPossessed()
 
 bool ATank::CanDie() const
 {
-	if (bIsDying										// already dying
+	if (!bCanDie
+		|| bIsDying										// already dying
 		|| IsPendingKill()								// already destroyed
 		|| Role != ROLE_Authority)						// not authority
 	{
@@ -474,7 +564,7 @@ void ATank::SetHighlight(bool bHighlight)
 float ATank::GetHullAlignment() const
 {
 	const auto hullYawVector = FVector::VectorPlaneProject(GetActorForwardVector(), CameraMovementComponent->GetCameraUpVector()).GetSafeNormal();
-	auto angle = FMath::RadiansToDegrees(FMath::Acos(hullYawVector | CameraMovementComponent->GetCameraForwardVector()));
+	const auto angle = FMath::RadiansToDegrees(FMath::Acos(hullYawVector | CameraMovementComponent->GetCameraForwardVector()));
 	return (hullYawVector | CameraMovementComponent->GetCameraRightVector()) > 0 ? angle : -angle;
 }
 
@@ -490,7 +580,12 @@ bool ATank::TryFireGun()
 	if(MainWeaponComponent->TryFireGun())
 	{
 		SpottingComponent->bHasFired = true;
-		CamouflageComponent->DepletAll();
+
+		if (CamouflageComponent && CamouflageComponent->GetCamouflageFactor() > 0)
+		{
+			CamouflageComponent->Deplet(FiringCamouflageDurationPenalty);
+		}
+		
 		return true;
 	}
 

@@ -2,9 +2,11 @@
 
 #pragma once
 
-#include "UWOT.h"
-#include "WheeledVehicleMovementComponent.h"
+#include "CoreMinimal.h"
+
 #include "WheeledVehicleMovementComponent4W.h"
+#include "WheeledVehicleMovementComponent.h"
+
 #include "TankMovementComponent.generated.h"
 
 class UTrackComponent;

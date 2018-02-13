@@ -70,8 +70,7 @@ bool UCamouflageComponent::TrySetCamouflage(bool bEnable)
 	return false;
 }
 
-void UCamouflageComponent::DepletAll()
+void UCamouflageComponent::Deplet(const float depletedDuration)
 {
-	bCamouflage = false;
-	CamouflageRemainDuration = 0;
+	CamouflageRemainDuration = FMath::Clamp(CamouflageRemainDuration - depletedDuration, 0.0f, CamouflageDuration);
 }

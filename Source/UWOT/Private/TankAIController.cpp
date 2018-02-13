@@ -27,15 +27,9 @@ void ATankAIController::SetPawn(APawn* InPawn)
 
 	if(tank != ControlledTank)
 	{
-		// Reset last possessed tank
-		if (ControlledTank)
-		{
-			ControlledTank->SpottingComponent->TeamId = ETankTeamEnum::NONE;
-		}
-
 		ControlledTank = tank;
 
-		if (ControlledTank)
+		if (IsValid(ControlledTank))
 		{
 			ControlledTank->SpottingComponent->TeamId = TeamId;
 		}
@@ -46,46 +40,66 @@ void ATankAIController::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);
 
-	if(TargetTank && ControlledTank)
+	if(bHasTarget && ControlledTank)
 	{
-		auto outHitResult = FPredictProjectilePathResult();
-		ControlledTank->MainWeaponComponent->TraceProjectilePath(outHitResult);
-		const auto bTargetLocked = outHitResult.HitResult.GetActor() == TargetTank;
+		auto bTargetLocked = false;
 
-		ControlledTank->MainWeaponComponent->AimGun(TargetTank->GetAiTargetLocation(), bDrawAimingDebugLine);
+		if(IsValid(TargetTank))
+		{
+			auto outHitResult = FPredictProjectilePathResult();
+			ControlledTank->MainWeaponComponent->TraceProjectilePath(outHitResult);
 
-		auto const towardPlayerVector = TargetTank->GetActorLocation() - ControlledTank->GetActorLocation();
-		auto const bIsAhead = (towardPlayerVector | ControlledTank->GetActorForwardVector()) > 0;
+			bTargetLocked = outHitResult.HitResult.GetActor() == TargetTank;
+
+			LastSpottedTargetLocation = TargetTank->GetAiTargetLocation();
+		}
+
+		auto const towardPlayerVector = LastSpottedTargetLocation - ControlledTank->GetActorLocation();
+		auto const bIsInsideAcceptanceRadius = towardPlayerVector.SizeSquared() < AcceptanceDistance * AcceptanceDistance;
 
 		// Move toward player if distance-to-player is bigger than AcceptanceDistance or cannot lock gun into player
-		// and is in front of controlled tank
-		if (bIsAhead && (towardPlayerVector.SizeSquared() > AcceptanceDistance * AcceptanceDistance || !bTargetLocked))
+		if (!bIsInsideAcceptanceRadius || !bTargetLocked)
 		{
 			// Try to move using navmesh if possible
-			MoveToActor(TargetTank, AcceptanceDistance, true, true);
+			MoveToLocation(LastSpottedTargetLocation, AcceptanceDistance, true, true);
 		}
 
 		// Else rotate the body to angle against player attack
 		// or rotate to face player before moving
 		else
 		{
+			StopMovement();
+
 			// Rotate toward the best angled position
 			// There will be 2 such position, one on the left and other on the right
 			// Choose the position that player is facing toward, in advance of them moving forward
-			const auto bestAngle = (TargetTank->GetActorForwardVector() | ControlledTank->GetActorRightVector()) > 0 ? BestAngleDeg : -BestAngleDeg;
+			const auto bestAngle = (LastSpottedTargetLocation | ControlledTank->GetActorRightVector()) > 0 ? BestAngleDeg : -BestAngleDeg;
 
 			const auto bestAngleDirection = towardPlayerVector.RotateAngleAxis(bestAngle, ControlledTank->GetActorUpVector()).GetSafeNormal();
-			const auto rotateRightThrust = bestAngleDirection | ControlledTank->GetActorRightVector();
+			auto rotateRightThrust = bestAngleDirection | ControlledTank->GetActorRightVector();
 
 			if (FMath::Abs(rotateRightThrust) > FMath::Sin(FMath::DegreesToRadians(BestAngleToleranceDeg)))
 			{
+				// Normalize thrust
+				rotateRightThrust /= FMath::Abs(rotateRightThrust);
+
 				ControlledTank->MovementComponent->SetTargetGear(1, true);
 				ControlledTank->MovementComponent->SetThrottleInput(1);
-
 				ControlledTank->MovementComponent->SetLeftThrustInput(rotateRightThrust);
 				ControlledTank->MovementComponent->SetRightThrustInput(-rotateRightThrust);
 			}
 		}
+
+		// Reset last spotted target location if
+		// Already lost spotting on target tank
+		// but still have not reached last target
+		if(!IsValid(TargetTank) && bHasTarget && bIsInsideAcceptanceRadius)
+		{
+			bHasTarget = false;
+		}
+
+
+		ControlledTank->MainWeaponComponent->AimGun(LastSpottedTargetLocation, bDrawAimingDebugLine);
 
 		// Firing action
 		if (bFirable)
@@ -99,26 +113,39 @@ void ATankAIController::Tick(float deltaTime)
 	}
 }
 
-bool ATankAIController::OnSpottedSelf_Implementation(bool bSpotted)
+float ATankAIController::TakeDamage(float damage, FDamageEvent const& damageEvent, AController* eventInstigator,
+	AActor* damageCauser)
 {
-	ControlledTank->SetActorHiddenInGame(!bSpotted);
-
-	return true;
+	// Respond to getting hitted if not already has target
+	if(!TargetTank)
+	{
+		bHasTarget = true;
+		LastSpottedTargetLocation = damageCauser->GetActorLocation();
+	}
+	
+	return Super::TakeDamage(damage, damageEvent, eventInstigator, damageCauser);
 }
 
-bool ATankAIController::OnSpottedOther_Implementation(bool bSpotted, ATank * other)
+void ATankAIController::OnSpottedSelf_Implementation(bool bSpotted)
+{
+	ControlledTank->SetActorHiddenInGame(!bSpotted);
+}
+
+void ATankAIController::OnSpottedOther_Implementation(bool bSpotted, ATank * other)
 {
 	if(bSpotted)
 	{
-		TargetTank = other;
+		if (!IsValid(TargetTank))
+		{
+			TargetTank = other;
+			bHasTarget = true;
+		}
 	}
+
 	else if (TargetTank == other)
 	{
 		TargetTank = nullptr;
 	}
-	
-
-	return true;
 }
 
 ETankTeamEnum ATankAIController::GetTeamId()

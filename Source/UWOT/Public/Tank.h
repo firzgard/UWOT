@@ -34,6 +34,7 @@ private:
 	bool bFullThrottleSfxPlayed = false;
 	bool bTrackRollingSfxPlaying = false;
 	float SkidStartTime = 0;
+	int RemainingHitpoint = 100;
 
 protected:
 	/** The point where AI should aim at */
@@ -103,14 +104,28 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Effects, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"))
 		float SkidSFXLateralSlipThreshold = 0.8;
 	/** If skidding time is shorter than this value, skid stop sfx won't be played */
-	UPROPERTY(Category = Effects, EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
 		float SkidStoppingSFXMinSkidDuration = 0.5;
 
 	/** track effects cannot play if velocity is lower than this */
-	UPROPERTY(Category = Effects, EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
 		float TrackRollingSFXSpeedThreshold = 15;
-	UPROPERTY(Category = Effects, EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
 		float TrackRollingSfxFadeoutTime = 1;
+
+	/** Camouflage time penalty received when firing with camouflage on */
+	UPROPERTY(EditDefaultsOnly, Category = Camouflage)
+		float FiringCamouflageDurationPenalty = 5;
+
+	/** Camouflage time penalty received when getting hit with camouflage on */
+	UPROPERTY(EditDefaultsOnly, Category = Camouflage)
+		float GetHitCamouflageDurationPenalty = 10;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = Health)
+		int Hitpoint = 1000;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Health)
+		bool bCanDie = true;
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
@@ -179,6 +194,8 @@ public:
 		float GetHullAlignment() const;
 	UFUNCTION(BlueprintCallable)
 		float GetTurretAlignment() const;
+	UFUNCTION(BlueprintCallable)
+		FORCEINLINE int GetRemainingHitpoint() const { return RemainingHitpoint; };
 
 	UFUNCTION(BlueprintCallable)
 		bool TryFireGun();

@@ -32,8 +32,8 @@ public:
 	virtual ATank * GetControlledTank() = 0;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Spotting")
-		bool OnSpottedSelf(bool bSpotted);
+		void OnSpottedSelf(bool bSpotted);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Spotting")
-		bool OnSpottedOther(bool bSpotted, ATank * other);
+		void OnSpottedOther(bool bSpotted, ATank * other);
 };

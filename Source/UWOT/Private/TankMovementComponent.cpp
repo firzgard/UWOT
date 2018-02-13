@@ -13,19 +13,21 @@
 
 #pragma region HELPERS
 
-	// BUG?? FVehicleEngineData::FindPeakTorque in WheeledVehicleMovementComponent4W.cpp is not linked
-	float FVehicleEngineData::FindPeakTorque() const
-	{
-		// Find max torque
-		float PeakTorque = 0.f;
-		TArray<FRichCurveKey> TorqueKeys = TorqueCurve.GetRichCurveConst()->GetCopyOfKeys();
-		for (int32 KeyIdx = 0; KeyIdx < TorqueKeys.Num(); KeyIdx++)
+	#if WITH_EDITOR
+		// BUG?? FVehicleEngineData::FindPeakTorque in WheeledVehicleMovementComponent4W.cpp is not linked
+		float FVehicleEngineData::FindPeakTorque() const
 		{
-			FRichCurveKey& Key = TorqueKeys[KeyIdx];
-			PeakTorque = FMath::Max(PeakTorque, Key.Value);
+			// Find max torque
+			float PeakTorque = 0.f;
+			TArray<FRichCurveKey> TorqueKeys = TorqueCurve.GetRichCurveConst()->GetCopyOfKeys();
+			for (int32 KeyIdx = 0; KeyIdx < TorqueKeys.Num(); KeyIdx++)
+			{
+				FRichCurveKey& Key = TorqueKeys[KeyIdx];
+				PeakTorque = FMath::Max(PeakTorque, Key.Value);
+			}
+			return PeakTorque;
 		}
-		return PeakTorque;
-	}
+	#endif
 
 	// Copy UWheeledVehicleMovementComponent4W BackwardsConvertCm2ToM2()
 	static void BackwardsConvertCm2ToM2(float& val, const float defaultValue)
@@ -346,46 +348,6 @@ void UTankMovementComponent::UpdateTankState(float DeltaTime)
 			RightThrustInput = RightThrustChangeRate.InterpInputValue(DeltaTime, RightThrustInput, RawRightThrustInput);
 		}
 
-		// Prevent auto-switching gear on turning
-		if (TransmissionSetup.bUseGearAutoBox && GetCurrentGear() != 0)
-		{
-			static const auto AUTO_GEAR_OFF_THRUST_DIFF_THRESHOLD = 0.1f;
-			if (FMath::IsNearlyEqual(LeftThrustInput, RightThrustInput, AUTO_GEAR_OFF_THRUST_DIFF_THRESHOLD) && BrakeLeftInput == BrakeRightInput)
-			{
-				if(!GetUseAutoGears())
-				{
-					SetUseAutoGears(true);
-				}
-			}
-			else
-			{
-				if(GetUseAutoGears())
-				{
-					SetUseAutoGears(false);
-
-					if (bReverseAsBrake)
-					{
-						//for reverse as state we want to automatically shift between reverse and first gear
-						if (GetForwardSpeed() < TurnInPlaceSpeedThreshold)	//we only shift between reverse and first if the car is slow enough. This isn't 100% correct since we really only care about engine speed, but good enough
-						{
-							if (RawThrottleInput < 0.f && GetCurrentGear() >= 0)
-							{
-								SetTargetGear(-1, true);
-							}
-							else if (RawThrottleInput > 0.f && GetCurrentGear() <= 0)
-							{
-								SetTargetGear(1, true);
-							}
-						}
-					}
-					else
-					{
-						SetTargetGear(GetTargetGear(), true);
-					}
-				}
-			}
-		}
-
 		ServerUpdateState(SteeringInput, ThrottleInput, BrakeInput, HandbrakeInput, GetCurrentGear());
 		ServerUpdateTankState(LeftThrustInput, RightThrustInput, BrakeLeftInput, BrakeRightInput);
 	}
@@ -406,9 +368,20 @@ void UTankMovementComponent::UpdateTankState(float DeltaTime)
 void UTankMovementComponent::RequestDirectMove(const FVector& moveVelocity, bool bForceMaxSpeed)
 {
 	auto const bForward = (GetOwner()->GetActorForwardVector() | moveVelocity) >= 0;
-	SetThrottleInput(bForward ? 1 : -1);
-	SetTargetGear(bForward ? TransmissionSetup.ForwardGears.Num() : -1, false);
-	SetSteeringDirection(FVector2D(GetOwner()->GetTransform().InverseTransformVector(moveVelocity.GetSafeNormal())));
+	auto const moveDirection = FVector2D(GetOwner()->GetTransform().InverseTransformVector(moveVelocity.GetSafeNormal()));
+
+	SetThrottleInput(1);
+
+	// No need for AI to move backward, just rotate in-place before moving
+	if(bForward)
+	{
+		SetSteeringDirection(moveDirection);
+	}
+	else
+	{
+		SetTargetGear(1, true);
+		SetSteeringDirection(FVector2D(0, moveDirection.Y));
+	}
 }
 
 void UTankMovementComponent::SetupVehicle()

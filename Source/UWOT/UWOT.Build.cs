@@ -16,7 +16,6 @@ public class UWOT : ModuleRules
             , "PhysX"
 		    , "APEX"
             , "PhysXVehicles"
-            , "PhysXVehiclesEditor"
             , "PhysXVehicleLib"
         });
 

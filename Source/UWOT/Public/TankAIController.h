@@ -18,7 +18,9 @@ class UWOT_API ATankAIController : public AAIController, public ITankController
 	GENERATED_BODY()
 
 private:
-	ATank * TargetTank;
+	ATank * TargetTank = nullptr;
+	FVector LastSpottedTargetLocation;
+	bool bHasTarget = false;
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
@@ -42,20 +44,19 @@ public:
 		bool bDrawAimingDebugLine = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components|AI Properties")
 		bool bFirable = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components|AI Properties")
+		bool bMovable = true;
+
+protected:
+	void OnSpottedSelf_Implementation(bool bSpotted) override;
+	void OnSpottedOther_Implementation(bool bSpotted, ATank * other) override;
 
 public:
 
 	void BeginPlay() override;
 	void SetPawn(APawn* InPawn) override;
 	void Tick(float deltaTime) override;
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Spotting")
-		bool OnSpottedSelf(bool bSpotted);
-		bool OnSpottedSelf_Implementation(bool bSpotted) override;
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Spotting")
-		bool OnSpottedOther(bool bSpotted, ATank * other);
-		bool OnSpottedOther_Implementation(bool bSpotted, ATank * other) override;
+	float TakeDamage(float damage, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser) override;
 
 	UFUNCTION(BlueprintCallable)
 		ETankTeamEnum GetTeamId() override;

@@ -24,15 +24,9 @@ void ATankPlayerController::SetPawn(APawn* InPawn)
 
 	if (tank != ControlledTank)
 	{
-		// Reset last possessed tank
-		if (ControlledTank)
-		{
-			ControlledTank->SpottingComponent->TeamId = ETankTeamEnum::NONE;
-		}
-
 		ControlledTank = tank;
 
-		if (ControlledTank)
+		if (IsValid(ControlledTank))
 		{
 			ControlledTank->SpottingComponent->TeamId = TeamId;
 		}
@@ -83,15 +77,12 @@ void ATankPlayerController::GetAimingTargetPosition(FVector const &CursorWorldLo
 	}
 }
 
-bool ATankPlayerController::OnSpottedSelf_Implementation(bool bSpotted)
+void ATankPlayerController::OnSpottedSelf_Implementation(bool bSpotted)
 {
-	ReceiveOnSpottedSeft(bSpotted);
-	return true;
 }
 
-bool ATankPlayerController::OnSpottedOther_Implementation(bool bSpotted, ATank * other)
+void ATankPlayerController::OnSpottedOther_Implementation(bool bSpotted, ATank * other)
 {
-	return true;
 }
 
 ETankTeamEnum ATankPlayerController::GetTeamId()

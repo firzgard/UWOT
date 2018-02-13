@@ -23,13 +23,7 @@ void UTankSpottingComponent::BeginPlay()
 
 void UTankSpottingComponent::EndPlay(const EEndPlayReason::Type endPlayReason)
 {
-	switch (endPlayReason) {
-		case EEndPlayReason::Destroyed:
-		case EEndPlayReason::EndPlayInEditor:
-		case EEndPlayReason::RemovedFromWorld:
-			ATankSpottingManager::GetInstance()->UnsubscribeSpottingComponenent(this);
-		break;
-	}
+	ATankSpottingManager::GetInstance()->UnsubscribeSpottingComponenent(this);
 
 	Super::EndPlay(endPlayReason);
 }

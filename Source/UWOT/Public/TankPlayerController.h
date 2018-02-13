@@ -31,23 +31,15 @@ protected:
 	void SetPawn(APawn* InPawn) override;
 	void Tick(float deltaTime) override;
 
-	UFUNCTION(BlueprintCallable)
-		void GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector& OutTargetPosition) const;
+	void OnSpottedSelf_Implementation(bool bSpotted) override;
+	void OnSpottedOther_Implementation(bool bSpotted, ATank * other) override;
 
 public:
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "SetTank"))
 		void ReceiveSetTank(ATank * lastTank);
-	UFUNCTION(BlueprintImplementableEvent)
-		void ReceiveOnSpottedSeft(bool bSpotted);
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Spotting")
-		bool OnSpottedSelf(bool bSpotted);
-		bool OnSpottedSelf_Implementation(bool bSpotted) override;
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Spotting")
-		bool OnSpottedOther(bool bSpotted, ATank * other);
-		bool OnSpottedOther_Implementation(bool bSpotted, ATank * other) override;
-
+	UFUNCTION(BlueprintCallable)
+		void GetAimingTargetPosition(FVector const &CursorWorldLocation, FVector const &CursorWorldDirection, float const LineTraceRange, FVector& OutTargetPosition) const;
 	UFUNCTION(BlueprintCallable)
 		ETankTeamEnum GetTeamId() override;
 	UFUNCTION(BlueprintCallable)

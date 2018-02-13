@@ -54,6 +54,7 @@ Binaries/*
 
 # Builds
 Build/*
+ReleaseBuild/*
 
 # Whitelist PakBlacklist-<BuildConfiguration>.txt files
 !Build/*/
@@ -89,6 +90,7 @@ UWOT/Binaries/*
 
 # Builds
 UWOT/Build/*
+UWOT/ReleaseBuild/*
 
 # Whitelist PakBlacklist-<BuildConfiguration>.txt files
 UWOT/!Build/*/
