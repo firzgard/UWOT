@@ -33,9 +33,15 @@ Camouflage with transition effect. I use Dither Temporal AA to simulate camoufla
 - [Tech Art Aid - UE4: Stealth Invisibility Effect (With Distortion)](https://youtu.be/9ZawosRVZrs)
 - [UnrealCG - Disintegration Effect- UE4 Material Function Tutorial](https://youtu.be/gldIJGqlWf0)
 
-# Other references:
+# References:
+## Tutorials:
 - [Tom Looman's Outline effect](http://www.tomlooman.com/outline-effect-in-unreal-engine-4)
 - [PawelM's Outline effect, with explaination on Sobel operator](http://www.michalorzelek.com/blog/tutorial-creating-outline-effect-around-objects)
 
+## Materials:
+- Sixthsense/Newtype flash SFX and Char Aznable image are owned by Sunrise Inc. and Bandai Inc.
+- Epic's Vehicle Game demo: You can find it under "Learn" subtab of Epic Game Launcher - Unreal Engine Tab.
+- [Main BGM: Matthew Pablo - Dream Raid I](https://opengameart.org/content/dream-raid-cinematic-action-soundtrack)
+- [Reload SFXs - Drawer SFXs - Mafon2](https://freesound.org/people/Mafon2/sounds/330021)
 
 # [Backlog](https://trello.com/b/TEaTh0oi/uwot)
