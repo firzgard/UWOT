@@ -2,12 +2,14 @@
 My implementation of Ben Tristem's tank game following his [UE4 course](https://www.udemy.com/unrealcourse/).
 If you want to reimplement features similar to this demo, the fastest way would just be reading through the source code and the tank setup in my implementation. However, in case you do not like to shoot in the dark, or would rather reimplementing from the raw, I try to provide as many references that I have used during the development below. Enjoy :3
 
+# [Demo Game Download:](https://goo.gl/Ps3ZJw)
+
 # Feature listing:
 
 ## PhysX tank vehicle:
 
 ### Demo:
-[![Alt text](https://img.youtube.com/vi/D92JwmrB2vo/0.jpg)](https://youtu.be/D92JwmrB2vo)
+[![Alt text](https://img.youtube.com/vi/V73rDNuEIJQ/0.jpg)](https://youtu.be/V73rDNuEIJQ)
 
 ### References:
 - [PhysX's vehicle manual](http://docs.nvidia.com/gameworks/content/gameworkslibrary/physx/guide/Manual/Vehicles.html): You should read this one to take a good grip as to how physx vehicle does things. You can reuse UE4's vehicle setup for most of the c++ implementation though. The important thing is that the article does provide a lot of hint on tuning the vehicle though. Tuning the tank is a real pain, so follow these hint will save you lots of time.
