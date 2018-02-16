@@ -5,7 +5,7 @@ My implementation of Ben Tristem's tank game following his [UE4 course](https://
 
 [![Alt text](https://img.youtube.com/vi/V73rDNuEIJQ/0.jpg)](https://youtu.be/V73rDNuEIJQ)
 
-All futures downloads will be gathered within [this folder](https://goo.gl/Ps3ZJw).
+All future downloads will be gathered within [this folder](https://goo.gl/Ps3ZJw).
 
 # For the adventures:
 
@@ -34,9 +34,9 @@ In case you do not like shooting in the dark, or would rather reimplementing fro
 
 ### Tips and tricks on tuning tank's steering:
 
-Steering is probably the biggest headache to me when building the tank. As you may have know already, tank turns by differing their track speed on each side. The doc says that you can control each side's turning speed by changing the thrust input (-1..1 range) on each side. Well, it does, but I seriously have no idea how it work, or even if it is working correctly. It seems to me that dropping the thrust input on one side will reduce the amount of toque that is being transmitted from the engine over to that side, so that side will need to slow down on its own drag or by stepping on brace. Correct me if I am wrong, but this mean the best you can do is clutch-braking steering.
+Steering was probably the biggest headache to me when building the tank. As you may have known already, tank turns by differing their track speed on each side. PhysX allows you to control the amount of torque that is being transmitted from the engine to each side's by changing the thrust input (-1..1 range). This means that to slow down one side, you need to let it slow down on its own drag or by stepping on brace. Correct me if I am wrong, but this means the best you can make is clutch-braking steering. If only they implemented the steering based on Russian twin-transmission instead...
 
-I choose to hack together a differential mechanism instead. First, I find the current speed ratio between 2 sides, then compare with the desired ratio from the input. I can then increase/decrease the speeds of each side by setting the thrust input to 1 (increase) or -1 (decrease) or, say, 0 (keep), respectively. You can find my implementation in 
+Back to the issue, I decided to hack together a differential mechanism instead. First, we need to get the current speed ratio between 2 sides, then compare it with the desired ratio taken from control input. We can then increase/decrease the speeds of each side by setting the thrust input to 1 (increase) or -1 (decrease) or, say, 0 (keep current), respectively. You can find my implementation in:
 ```c++
 void TankMovementComponent::SetSteeringDirection(FVector2D desiredSteeringDirection);
 ```
@@ -50,7 +50,6 @@ You will also need to fine-tune your blueprint tank properly. Some settings that
 - Lateral slip stiffness: Keep this close to its default. Higher value will help limiting over-steering, but make it harder to turn.
 - TireConfig's fiction scale: Increase it will certainly help your tank steer much more smoother, but will make turning in-place much harder (and will make your tank into some spider monster that can climb vertically)
 - Moment of inertia settings: I generally do not want to touch these, as it is prone to leave some bad side effects (Such as sending your tank flying after collision, or down right crashing the game). If you have real-life data on these, them use them, but remember to always keep them above their defaults (>= 1).
-
 
 ### Camouflage:
 Camouflage with transition effect. I use Dither Temporal AA to simulate camouflage effect. I tried both translucent and screen texture emissive material but both gave weird artifact when using with multi-layer mesh.
