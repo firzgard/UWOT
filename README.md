@@ -98,5 +98,3 @@ The testing-against-each-other part is rather cumbersome, so I actually create a
 - Epic's Vehicle Game demo: You can find it under "Learn" subtab of Epic Game Launcher - Unreal Engine Tab.
 - [Main BGM: Matthew Pablo - Dream Raid I](https://opengameart.org/content/dream-raid-cinematic-action-soundtrack)
 - [Reload SFXs - Drawer SFXs - Mafon2](https://freesound.org/people/Mafon2/sounds/330021)
-
-# [Backlog](https://trello.com/b/TEaTh0oi/uwot)
