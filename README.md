@@ -1,9 +1,11 @@
 # UWOT
 My implementation of Ben Tristem's tank game following his [UE4 course](https://www.udemy.com/unrealcourse/).
 
-# [Demo Game Download](https://goo.gl/Ps3ZJw)
+# [Demo Game & Download](https://goo.gl/Ps3ZJw)
 
 [![Alt text](https://img.youtube.com/vi/V73rDNuEIJQ/0.jpg)](https://youtu.be/V73rDNuEIJQ)
+
+**https://youtu.be/V73rDNuEIJQ**
 
 All future downloads will be gathered within [this folder](https://goo.gl/Ps3ZJw).
 
