@@ -34,9 +34,11 @@ In case you do not like shooting in the dark, or would rather reimplementing fro
 
 ### Tips and tricks on tuning tank's steering:
 
-Steering was probably the biggest headache to me when building the tank. As you may have known already, tank turns by differing their track speed on each side. PhysX allows you to control the amount of torque that is being transmitted from the engine to each side's by changing the thrust input (-1..1 range). This means that to slow down one side, you need to let it slow down on its own drag or by stepping on brace. Correct me if I am wrong, but this means the best you can make is clutch-braking steering. If only they implemented the steering based on Russian twin-transmission instead...
+Steering was probably the biggest headache to me when building the tank. As you may have known already, tank turns by differing their track speed on each side. PhysX allows you to control the amount of torque that is being transmitted from the engine to each side's by changing the thrust input (-1..1 range).
 
-Back to the issue, I decided to hack together a differential mechanism instead. First, we need to get the current speed ratio between 2 sides, then compare it with the desired ratio taken from control input. We can then increase/decrease the speeds of each side by setting the thrust input to 1 (increase) or -1 (decrease) or, say, 0 (keep current), respectively. You can find my implementation in:
+I am not sure by which mean that they reduce the ammount of torque. They can slow down the transmisison gear on one side and then the clutches will slow the wheels on that side to match with, or just simply reduce it straight from the equation of torque that the clutches transmit to the wheels (Which seems to be the case). Either way, controlling tank steering using this thrust input thingy is rather unwieldy. I couldn't accurately control the speed ratio between 2 sides at all. There are cases where reducing the thrust input does little effect on slowing the track down, so you would need to slow it down using brake. In short, it is too difficult to control the steering manually this way.
+
+After struggling unsuccessfully with the thrust input. I decided to hack together a differential mechanism instead. First, we need to get the current speed ratio between 2 sides, then compare it with the desired ratio taken from control input. We can then increase/decrease the speeds of each side by setting the thrust input to 1 (increase) or -1 (decrease) or, say, 0 (keep current), respectively, to archive the desired ratio. You can find my implementation in:
 ```c++
 void TankMovementComponent::SetSteeringDirection(FVector2D desiredSteeringDirection);
 ```
