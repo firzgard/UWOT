@@ -17,7 +17,7 @@ In case you do not like shooting in the dark, or would rather reimplementing fro
 
 ## Feature listing:
 
-### PhysX tank vehicle:
+### ◊ PhysX tank vehicle:
 
 #### References:
 - [UE4's Vehicle guide](https://docs.unrealengine.com/latest/INT/Engine/Physics/Vehicles/VehicleUserGuide): You should first play around with the PhysX vehicle system that comes with UE4. Try to set your vehicle up to understand how the suspension works, how the physics component and the animator works with each other.
@@ -36,7 +36,7 @@ In case you do not like shooting in the dark, or would rather reimplementing fro
 
 - [Wikipedia - Slip](https://en.wikipedia.org/wiki/Slip_(vehicle_dynamics))
 
-### Notices:
+#### Notices:
 - You will need a tank with rigged chassis if you want the animation blueprint to take care of the suspension. The tank that I use in my demo was re-rigged from the tank in Ben Tristem's course. If you reuse it, please credit his course too.
 
 #### Tips and tricks on tuning tank's steering:
@@ -60,7 +60,7 @@ You will also need to fine-tune your blueprint tank properly. Some settings that
 - TireConfig's fiction scale: Increase it will certainly help your tank steer much more smoother, but will make turning in-place much harder (and will make your tank into some spider monster that can climb vertically)
 - Moment of inertia settings: I generally do not want to touch these, as it is prone to leave some bad side effects (Such as sending your tank flying after collision, or down right crashing the game). If you have real-life data on these, them use them, but remember to always keep them above their defaults (>= 1).
 
-### Camouflage:
+### ◊ Camouflage:
 Camouflage with transition effect. I use Dither Temporal AA to simulate camouflage effect. I tried both translucent and screen texture emissive material but both gave weird artifact when using with multi-layer mesh.
 
 #### Demo:
@@ -73,13 +73,13 @@ Camouflage with transition effect. I use Dither Temporal AA to simulate camoufla
 
 ![In-game demo](https://github.com/megafirzen/UWOT/blob/master/RawContent/Images/Demo_Camo002.gif "In-game demo")
 
-### References:
+#### References:
 - [TGA Digital - UE4 Transition Effect Shader](https://youtu.be/_vGLVXHEQDQ)
 - [Tech Art Aid - UE4: How to fix translucent materials (dithered opacity)](https://youtu.be/ieHpTG_P8Q0)
 - [Tech Art Aid - UE4: Stealth Invisibility Effect (With Distortion)](https://youtu.be/9ZawosRVZrs)
 - [UnrealCG - Disintegration Effect- UE4 Material Function Tutorial](https://youtu.be/gldIJGqlWf0)
 
-## Tank gun ballistics and animation:
+### ◊ Tank gun ballistics and animation:
 
 **Tl;dr:** Take a look at my TankMainWeaponComponet class
 
@@ -91,7 +91,7 @@ Usually, at certain turret's angle, the tank cannot depress its gun fully. For e
 
 **TODO: Add demo gif**
 
-## Spotting mechanism:
+### ◊ Spotting mechanism:
 
 My spotting mechanism is based off of [WOT's one](http://wiki.wargaming.net/en/Battle_Mechanics#Spotting_Mechanics).
 
@@ -101,10 +101,10 @@ Each **TankSpottingComponent** has a list of view range ports and checkpoints. T
 
 The testing-against-each-other part is rather cumbersome, so I actually create a singleton **TankSpottingManager** game object that keep references to all the **TankSpottingComponents** in the map and let it do all the testing heavy lifting instead. The **TankSpottingManager** will then notify all concerned **TankSpottingComponents** when a spotting event occur. The **TankSpottingComponents** now only need to contains their individual constraints and spotting event handlers.
 
-### References:
+#### References:
 - [WOT's spotting mechanism](http://wiki.wargaming.net/en/Battle_Mechanics#Spotting_Mechanics)
 
-## 1st/3rd Camera transition movement with zoom:
+### ◊ 1st/3rd Camera transition movement with zoom:
 
 **Tl;dr:** Take a look at my TankCameraMovementComponent
 **TODO: Add description**
