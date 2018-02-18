@@ -20,9 +20,11 @@ In case you do not like shooting in the dark, or would rather reimplementing fro
 ### PhysX tank vehicle:
 
 #### References:
+- [UE4's Vehicle guide](https://docs.unrealengine.com/latest/INT/Engine/Physics/Vehicles/VehicleUserGuide): You should first play around with the PhysX vehicle system that comes with UE4. Try to set your vehicle up to understand how the suspension works, how the physics component and the animator works with each other.
+
 - You should take a look at UE4's **WheeledVehicleMovementComponent** and **WheeledVehicleMovementComponent4W** classes, especially the latter. I wrote my  **TankVehicleMovementComponent** by first made a copy of **WheeledVehicleMovementComponent4W** and then morphed it to support tank drive instead.
 
-- [PhysX's vehicle manual](http://docs.nvidia.com/gameworks/content/gameworkslibrary/physx/guide/Manual/Vehicles.html): You should read this one to get a good grip as to how PhysX vehicle does things. UE4 already has their own PhysX wheeled vehicle implementation, and you can certainly build your tank implementation upon it like mine; or go full-hardcore and write your own from scratch using this article as starting point! [Nvidia GameWorks's PhysX's source](https://github.com/NVIDIAGameWorks/PhysX-3.4) will be a great lead if you choose the latter choice. You will need to register your github with the organization to view it however.
+- [PhysX's vehicle manual](http://docs.nvidia.com/gameworks/content/gameworkslibrary/physx/guide/Manual/Vehicles.html): You should read this one to get a good grip as to how PhysX vehicle does things. UE4 already has their own PhysX wheeled vehicle implementation, and you can certainly build your tank implementation upon it like mine; or go full-hardcore and write your own from scratch using this article as starting point! [Nvidia GameWorks's PhysX's source](https://github.com/NVIDIAGameWorks/PhysX-3.4) will be a great lead if you choose the latter choice. You will need to [register your github with the organization](https://developer.nvidia.com/gameworks-source-github) to view it however.
 	
     This article also provides a lot of guideline on tuning vehicles. Tuning the tank is a real pain, so follow them will save you lots of time. I mean LOTS LOTS of time.
 
@@ -34,7 +36,10 @@ In case you do not like shooting in the dark, or would rather reimplementing fro
 
 - [Wikipedia - Slip](https://en.wikipedia.org/wiki/Slip_(vehicle_dynamics))
 
-### Tips and tricks on tuning tank's steering:
+### Notices:
+- You will need a tank with rigged chassis if you want the animation blueprint to take care of the suspension. The tank that I use in my demo was re-rigged from the tank in Ben Tristem's course. If you reuse it, please credit his course too.
+
+#### Tips and tricks on tuning tank's steering:
 
 Steering was probably the biggest headache to me when building the tank. As you may have known already, tank turns by differing their track speed on each side. PhysX allows you to control the amount of torque that is being transmitted from the engine to each side's by changing the thrust input (-1..1 range).
 
@@ -74,6 +79,18 @@ Camouflage with transition effect. I use Dither Temporal AA to simulate camoufla
 - [Tech Art Aid - UE4: Stealth Invisibility Effect (With Distortion)](https://youtu.be/9ZawosRVZrs)
 - [UnrealCG - Disintegration Effect- UE4 Material Function Tutorial](https://youtu.be/gldIJGqlWf0)
 
+## Tank gun ballistics and animation:
+
+**Tl;dr:** Take a look at my TankMainWeaponComponet class
+
+My tank gun implementation is a spin-off from Ben Tristem's. The principle is simple: we raycast from the crosshair on screen to find the location we are looking at, then use UE4's **SuggestProjectileVelocity**, using the barrel's location as start point, to get the dirrection where we should align the gun to. After that, we rotate the turret and elevate the barrel so that the barrel can align to the suggested direction as closely as possible. Do these steps every frame, with the turret's rotation speed and barrel's elevation speed limited, and we have a complete working tank gun system.
+
+**TODO: Add demo gif**
+
+Usually, at certain turret's angle, the tank cannot depress its gun fully. For example, the Soviet T-54 tank has -6 degree standard depression, but can only depress its gun -2 degree while aiming behind. I use a curve to constraint the depression of the barrel at each turret's angle.
+
+**TODO: Add demo gif**
+
 ## Spotting mechanism:
 
 My spotting mechanism is based off of [WOT's one](http://wiki.wargaming.net/en/Battle_Mechanics#Spotting_Mechanics).
@@ -87,6 +104,10 @@ The testing-against-each-other part is rather cumbersome, so I actually create a
 ### References:
 - [WOT's spotting mechanism](http://wiki.wargaming.net/en/Battle_Mechanics#Spotting_Mechanics)
 
+## 1st/3rd Camera transition movement with zoom:
+
+**Tl;dr:** Take a look at my TankCameraMovementComponent
+**TODO: Add description**
 
 # References:
 ## Tutorials:
