@@ -79,18 +79,6 @@ Camouflage with transition effect. I use Dither Temporal AA to simulate camoufla
 - [Tech Art Aid - UE4: Stealth Invisibility Effect (With Distortion)](https://youtu.be/9ZawosRVZrs)
 - [UnrealCG - Disintegration Effect- UE4 Material Function Tutorial](https://youtu.be/gldIJGqlWf0)
 
-### ◊ Tank gun ballistics and animation:
-
-**Tl;dr:** Take a look at my TankMainWeaponComponet class
-
-My tank gun implementation is a spin-off from Ben Tristem's. The principle is simple: we raycast from the crosshair on screen to find the location we are looking at, then use UE4's **SuggestProjectileVelocity**, using the barrel's location as start point, to get the dirrection where we should align the gun to. After that, we rotate the turret and elevate the barrel so that the barrel can align to the suggested direction as closely as possible. Do these steps every frame, with the turret's rotation speed and barrel's elevation speed limited, and we have a complete working tank gun system.
-
-**TODO: Add demo gif**
-
-Usually, at certain turret's angle, the tank cannot depress its gun fully. For example, the Soviet T-54 tank has -6 degree standard depression, but can only depress its gun -2 degree while aiming behind. I use a curve to constraint the depression of the barrel at each turret's angle.
-
-**TODO: Add demo gif**
-
 ### ◊ Spotting mechanism:
 
 My spotting mechanism is based off of [WOT's one](http://wiki.wargaming.net/en/Battle_Mechanics#Spotting_Mechanics).
@@ -103,11 +91,6 @@ The testing-against-each-other part is rather cumbersome, so I actually create a
 
 #### References:
 - [WOT's spotting mechanism](http://wiki.wargaming.net/en/Battle_Mechanics#Spotting_Mechanics)
-
-### ◊ 1st/3rd Camera transition movement with zoom:
-
-**Tl;dr:** Take a look at my TankCameraMovementComponent
-**TODO: Add description**
 
 # References:
 ## Tutorials:
